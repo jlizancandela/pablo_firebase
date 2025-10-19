@@ -4,11 +4,14 @@ import Image from 'next/image';
 import { Card, CardContent, CardFooter, CardHeader } from './ui/card';
 import type { Project } from '@/lib/data';
 import { Badge } from './ui/badge';
-import { CalendarDays, MapPin } from 'lucide-react';
+import { CalendarDays, MapPin, Trash2 } from 'lucide-react';
 import { Timestamp } from 'firebase/firestore';
+import { Button } from './ui/button';
+import React from 'react';
 
 interface ProjectCardProps {
   project: Project;
+  onDelete: () => void;
 }
 
 function formatDate(date: any): string {
@@ -23,10 +26,16 @@ function formatDate(date: any): string {
 }
 
 
-export default function ProjectCard({ project }: ProjectCardProps) {
+export default function ProjectCard({ project, onDelete }: ProjectCardProps) {
+    const handleDeleteClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+        e.preventDefault();
+        e.stopPropagation();
+        onDelete();
+    };
+
   return (
-    <Link href={`/projects/${project.id}`} className="block h-full">
-      <Card className="hover:shadow-accent/20 hover:shadow-lg transition-shadow duration-300 h-full flex flex-col group">
+    <Card className="hover:shadow-accent/20 hover:shadow-lg transition-shadow duration-300 h-full flex flex-col group">
+      <Link href={`/projects/${project.id}`} className="block h-full flex flex-col">
         <CardHeader className="p-0">
           <div className="relative h-48 w-full">
             <Image
@@ -37,6 +46,15 @@ export default function ProjectCard({ project }: ProjectCardProps) {
               data-ai-hint={project.coverPhotoHint}
             />
              <div className="absolute inset-0 bg-black/20 rounded-t-lg"></div>
+              <Button
+                  variant="destructive"
+                  size="icon"
+                  className="absolute top-2 right-2 h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
+                  onClick={handleDeleteClick}
+                >
+                  <Trash2 className="h-4 w-4" />
+                  <span className="sr-only">Eliminar proyecto</span>
+              </Button>
           </div>
         </CardHeader>
         <CardContent className="pt-4 flex-grow">
@@ -53,7 +71,7 @@ export default function ProjectCard({ project }: ProjectCardProps) {
            </div>
           <Badge variant={project.projectType === 'Comercial' ? 'default' : project.projectType === 'Residencial' ? 'secondary' : 'outline'}>{project.projectType}</Badge>
         </CardFooter>
-      </Card>
-    </Link>
+      </Link>
+    </Card>
   );
 }

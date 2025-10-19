@@ -6,8 +6,8 @@ import ProjectCard from "@/components/project-card";
 import { Button } from "@/components/ui/button";
 import { Project, getInitialPhases } from "@/lib/data";
 import { PlusCircle } from "lucide-react";
-import { useCollection, useFirebase, useMemoFirebase, addDocumentNonBlocking } from '@/firebase';
-import { collection, query } from 'firebase/firestore';
+import { useCollection, useFirebase, useMemoFirebase, addDocumentNonBlocking, deleteDocumentNonBlocking } from '@/firebase';
+import { collection, query, doc } from 'firebase/firestore';
 import { Card } from '@/components/ui/card';
 import { HardHat } from 'lucide-react';
 import { PlaceHolderImages } from "@/lib/placeholder-images";
@@ -21,6 +21,16 @@ import {
   DialogFooter,
   DialogClose,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -46,6 +56,7 @@ type ProjectFormData = z.infer<typeof projectSchema>;
 export default function Home() {
   const { firestore, user } = useFirebase();
   const [open, setOpen] = useState(false);
+  const [projectToDelete, setProjectToDelete] = useState<Project | null>(null);
 
   const {
     control,
@@ -76,7 +87,7 @@ export default function Home() {
     const newProject: Omit<Project, 'id'> = {
       ...data,
       startDate: new Date(),
-      coverPhotoUrl: PlaceHolderImages[Math.floor(Math.random() * 4)].imageUrl, // Random cover
+      coverPhotoUrl: PlaceHolderImages[Math.floor(Math.random() * 4)].imageUrl,
       coverPhotoHint: PlaceHolderImages[Math.floor(Math.random() * 4)].imageHint,
       tasks: [],
       photos: [],
@@ -88,6 +99,13 @@ export default function Home() {
     addDocumentNonBlocking(projectCollection, newProject);
     reset();
     setOpen(false);
+  };
+  
+  const handleDeleteProject = () => {
+    if (!projectToDelete || !user) return;
+    const projectDocRef = doc(firestore, 'users', user.uid, 'projects', projectToDelete.id);
+    deleteDocumentNonBlocking(projectDocRef);
+    setProjectToDelete(null);
   };
 
   const CreateProjectButton = ({ isCard }: { isCard?: boolean }) => (
@@ -171,7 +189,7 @@ export default function Home() {
         {!isLoading && projects && projects.length > 0 && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {projects.map((project) => (
-              <ProjectCard key={project.id} project={project} />
+              <ProjectCard key={project.id} project={project} onDelete={() => setProjectToDelete(project)} />
             ))}
           </div>
         )}
@@ -185,6 +203,22 @@ export default function Home() {
            </Card>
         )}
       </main>
+
+       <AlertDialog open={!!projectToDelete} onOpenChange={(open) => !open && setProjectToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta acción es permanente y no se puede deshacer. Se eliminará el proyecto
+              <span className="font-semibold"> {projectToDelete?.name}</span> y todos sus datos asociados.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setProjectToDelete(null)}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteProject}>Eliminar</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
