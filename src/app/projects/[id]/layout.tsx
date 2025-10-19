@@ -26,20 +26,19 @@ export const useProject = () => {
 function ProjectProvider({ children }: { children: ReactNode }) {
   const params = useParams();
   const id = params.id as string;
-  const { firestore, user } = useFirebase();
+  const { firestore, user, isUserLoading } = useFirebase();
 
   const projectRef = useMemoFirebase(() => {
-    // CRITICAL FIX: Only construct the reference if BOTH user and id are available.
+    // Only construct the reference if BOTH user and id are available.
     if (!user || !id) return null;
     return doc(firestore, 'users', user.uid, 'projects', id);
   }, [firestore, user, id]);
 
-  // Pass the potentially null reference to useDoc.
-  // useDoc is designed to handle this and will wait until the ref is valid.
-  const { data: project, isLoading } = useDoc<Project>(projectRef);
+  const { data: project, isLoading: isProjectLoading } = useDoc<Project>(projectRef);
 
-  // Show a loading state while the document is being fetched OR while the reference is being constructed (e.g. user is loading)
-  if (isLoading) {
+  // CRITICAL FIX: We must check for both user loading and project loading.
+  // If either is loading, we show the loading indicator.
+  if (isUserLoading || isProjectLoading) {
     return (
       <div className="flex items-center justify-center h-screen">
         <p>Cargando proyecto...</p>
@@ -47,7 +46,7 @@ function ProjectProvider({ children }: { children: ReactNode }) {
     );
   }
 
-  // If loading is finished and there's still no project data, THEN it's a 404.
+  // Only after all loading is complete, if there's no project, then it's a 404.
   if (!project) {
     return notFound();
   }

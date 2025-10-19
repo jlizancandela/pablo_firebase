@@ -1,3 +1,4 @@
+
 'use client';
     
 import { useState, useEffect } from 'react';
@@ -44,20 +45,22 @@ export function useDoc<T = any>(
   type StateDataType = WithId<T> | null;
 
   const [data, setData] = useState<StateDataType>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState<boolean>(true); // Start as true
   const [error, setError] = useState<FirestoreError | Error | null>(null);
 
   useEffect(() => {
+    // If the reference is not valid, we are not technically "loading" a specific doc,
+    // but we are in a waiting state. We set loading to false and clear data/errors.
     if (!memoizedDocRef) {
       setData(null);
-      setIsLoading(false);
+      setIsLoading(false); // We are not fetching, so not loading.
       setError(null);
       return;
     }
 
+    // When a valid reference is provided, we are now actively loading.
     setIsLoading(true);
     setError(null);
-    // Optional: setData(null); // Clear previous data instantly
 
     const unsubscribe = onSnapshot(
       memoizedDocRef,
@@ -69,7 +72,7 @@ export function useDoc<T = any>(
           setData(null);
         }
         setError(null); // Clear any previous error on successful snapshot (even if doc doesn't exist)
-        setIsLoading(false);
+        setIsLoading(false); // Loading is complete.
       },
       (error: FirestoreError) => {
         const contextualError = new FirestorePermissionError({
@@ -79,7 +82,7 @@ export function useDoc<T = any>(
 
         setError(contextualError)
         setData(null)
-        setIsLoading(false)
+        setIsLoading(false) // Loading is complete, even on error.
 
         // trigger global error propagation
         errorEmitter.emit('permission-error', contextualError);
