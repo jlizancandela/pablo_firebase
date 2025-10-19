@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect, useState } from "react";
@@ -22,20 +23,29 @@ import { cn } from "@/lib/utils";
 export default function ProjectTasksPage({ params }: { params: { id: string } }) {
   const [project, setProject] = useState<Project | null>(null);
   const [tasks, setTasks] = useState<Task[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    getProjectById(params.id).then(proj => {
+    const fetchProject = async () => {
+      const proj = await getProjectById(params.id);
       if (!proj) {
         notFound();
       } else {
         setProject(proj);
         setTasks(proj.tasks);
+        setLoading(false);
       }
-    });
+    };
+    
+    fetchProject();
   }, [params.id]);
 
-  if (!project) {
+  if (loading) {
     return <div>Cargando...</div>;
+  }
+
+  if (!project) {
+    return notFound();
   }
 
   const handleTaskCheck = (taskId: string, checked: boolean) => {
