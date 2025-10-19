@@ -58,7 +58,7 @@ function ProjectProvider({ children }: { children: ReactNode }) {
 export default function ProjectLayout({
   children,
 }: {
-  children: React.Node;
+  children: React.ReactNode;
 }) {
   const params = useParams();
   const id = params.id as string;
