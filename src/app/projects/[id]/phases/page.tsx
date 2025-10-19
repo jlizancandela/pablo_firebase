@@ -2,12 +2,15 @@
 'use client';
 
 import { useProject } from "../layout";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Badge } from "@/components/ui/badge";
 import { CheckCircle2, Circle, Radio, Paperclip } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
+import { Phase, Checkpoint, Field } from "@/lib/data";
+import { useFirebase } from "@/firebase";
+import { doc, updateDoc } from "firebase/firestore";
 
 const statusBadgeVariant = (status: 'No iniciada' | 'En curso' | 'Completada'): 'outline' | 'secondary' | 'default' => {
   if (status === 'No iniciada') return 'outline';
@@ -23,6 +26,41 @@ const statusIcon = (status: 'No iniciada' | 'En curso' | 'Completada') => {
 
 export default function ProjectPhasesPage() {
   const project = useProject();
+  const { firestore, user } = useFirebase();
+
+  const handleFieldChange = async (phaseId: string, checkpointId: string, fieldId: string, newValue: any) => {
+    if (!user) return;
+
+    // Create a deep copy of the phases array to avoid direct mutation
+    const newPhases: Phase[] = JSON.parse(JSON.stringify(project.phases));
+
+    const phaseIndex = newPhases.findIndex(p => p.id === phaseId);
+    if (phaseIndex === -1) return;
+
+    const checkpointIndex = newPhases[phaseIndex].checkpoints.findIndex(c => c.id === checkpointId);
+    if (checkpointIndex === -1) return;
+
+    const fieldIndex = newPhases[phaseIndex].checkpoints[checkpointIndex].fields.findIndex(f => f.id === fieldId);
+    if (fieldIndex === -1) return;
+
+    // Update the value of the specific field
+    newPhases[phaseIndex].checkpoints[checkpointIndex].fields[fieldIndex].value = newValue;
+
+    // TODO: Implement logic to update checkpoint and phase status based on field completion
+
+    const projectRef = doc(firestore, 'users', user.uid, 'projects', project.id);
+
+    try {
+      // Update the entire 'phases' array in the Firestore document
+      await updateDoc(projectRef, {
+        phases: newPhases
+      });
+    } catch (error) {
+      console.error("Error updating phase:", error);
+      // Here you could add a toast notification to inform the user of the error
+    }
+  };
+
 
   return (
     <div className="space-y-6">
@@ -32,7 +70,7 @@ export default function ProjectPhasesPage() {
       
       <Card>
         <CardContent className="p-0">
-          <Accordion type="single" collapsible className="w-full">
+          <Accordion type="single" collapsible className="w-full" defaultValue="item-0">
             {project.phases.map((phase, index) => (
               <AccordionItem value={`item-${index}`} key={phase.id}>
                 <AccordionTrigger className="p-6 hover:no-underline">
@@ -66,7 +104,11 @@ export default function ProjectPhasesPage() {
                                 {field.type === 'checkbox' ? (
                                   <>
                                     <label htmlFor={field.id} className="flex items-center gap-3 cursor-pointer">
-                                      <Checkbox id={field.id} checked={!!field.value} readOnly />
+                                      <Checkbox 
+                                        id={field.id} 
+                                        checked={!!field.value} 
+                                        onCheckedChange={(checked) => handleFieldChange(phase.id, checkpoint.id, field.id, checked)}
+                                      />
                                       {field.label}
                                     </label>
                                   </>
@@ -102,5 +144,3 @@ export default function ProjectPhasesPage() {
     </div>
   );
 }
-
-    
