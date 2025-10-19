@@ -1,16 +1,19 @@
 
 'use client';
 
+import { useRef } from "react";
 import { useProject } from "../layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Badge } from "@/components/ui/badge";
-import { CheckCircle2, Circle, Radio, Paperclip } from "lucide-react";
+import { CheckCircle2, Circle, Radio, Paperclip, Loader2 } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
-import { Phase, Checkpoint, Field } from "@/lib/data";
+import { Phase, Checkpoint, Field, FileAttachment } from "@/lib/data";
 import { useFirebase } from "@/firebase";
-import { doc, updateDoc } from "firebase/firestore";
+import { doc, updateDoc, Timestamp } from "firebase/firestore";
+import { useFileUpload } from "@/hooks/use-file-upload";
+import { useToast } from "@/hooks/use-toast";
 
 const statusBadgeVariant = (status: 'No iniciada' | 'En curso' | 'Completada'): 'outline' | 'secondary' | 'default' => {
   if (status === 'No iniciada') return 'outline';
@@ -27,37 +30,94 @@ const statusIcon = (status: 'No iniciada' | 'En curso' | 'Completada') => {
 export default function ProjectPhasesPage() {
   const project = useProject();
   const { firestore, user } = useFirebase();
+  const { uploadFile, isUploading } = useFileUpload();
+  const { toast } = useToast();
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const currentFieldInfo = useRef<{ phaseId: string; checkpointId: string; fieldId: string; fieldLabel: string; } | null>(null);
+
+
+  const handleFileButtonClick = (phaseId: string, checkpointId: string, fieldId: string, fieldLabel: string) => {
+    currentFieldInfo.current = { phaseId, checkpointId, fieldId, fieldLabel };
+    fileInputRef.current?.click();
+  };
+
+  const getFileExtension = (filename: string) => {
+    return filename.split('.').pop()?.toLowerCase();
+  }
+
+  const handleFileSelected = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (!event.target.files || event.target.files.length === 0 || !currentFieldInfo.current) {
+      return;
+    }
+
+    const file = event.target.files[0];
+    const { phaseId, checkpointId, fieldId, fieldLabel } = currentFieldInfo.current;
+    
+    if (!user) return;
+
+    try {
+      const { downloadURL } = await uploadFile(file, `projects/${project.id}/files`);
+
+      const newPhases: Phase[] = JSON.parse(JSON.stringify(project.phases));
+      const phaseIndex = newPhases.findIndex(p => p.id === phaseId);
+      if (phaseIndex === -1) return;
+      const checkpointIndex = newPhases[phaseIndex].checkpoints.findIndex(c => c.id === checkpointId);
+      if (checkpointIndex === -1) return;
+      const fieldIndex = newPhases[phaseIndex].checkpoints[checkpointIndex].fields.findIndex(f => f.id === fieldId);
+      if (fieldIndex === -1) return;
+
+      newPhases[phaseIndex].checkpoints[checkpointIndex].fields[fieldIndex].value = downloadURL;
+
+      const newFileAttachment: FileAttachment = {
+        id: `file_${Date.now()}`,
+        name: file.name,
+        url: downloadURL,
+        fileType: getFileExtension(file.name) as any || 'doc',
+        uploadedAt: Timestamp.now(),
+        phase: newPhases[phaseIndex].title,
+      };
+
+      const updatedFiles = [...project.files, newFileAttachment];
+      
+      const projectRef = doc(firestore, 'users', user.uid, 'projects', project.id);
+      await updateDoc(projectRef, {
+        phases: newPhases,
+        files: updatedFiles,
+      });
+
+    } catch (error) {
+      console.error("File upload process failed:", error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "El proceso de subida de archivo falló.",
+      });
+    } finally {
+        // Reset the input so the same file can be selected again
+        if(event.target) event.target.value = '';
+    }
+  };
+
 
   const handleFieldChange = async (phaseId: string, checkpointId: string, fieldId: string, newValue: any) => {
     if (!user) return;
 
-    // Create a deep copy of the phases array to avoid direct mutation
     const newPhases: Phase[] = JSON.parse(JSON.stringify(project.phases));
-
     const phaseIndex = newPhases.findIndex(p => p.id === phaseId);
     if (phaseIndex === -1) return;
-
     const checkpointIndex = newPhases[phaseIndex].checkpoints.findIndex(c => c.id === checkpointId);
     if (checkpointIndex === -1) return;
-
     const fieldIndex = newPhases[phaseIndex].checkpoints[checkpointIndex].fields.findIndex(f => f.id === fieldId);
     if (fieldIndex === -1) return;
 
-    // Update the value of the specific field
     newPhases[phaseIndex].checkpoints[checkpointIndex].fields[fieldIndex].value = newValue;
-
-    // TODO: Implement logic to update checkpoint and phase status based on field completion
 
     const projectRef = doc(firestore, 'users', user.uid, 'projects', project.id);
 
     try {
-      // Update the entire 'phases' array in the Firestore document
-      await updateDoc(projectRef, {
-        phases: newPhases
-      });
+      await updateDoc(projectRef, { phases: newPhases });
     } catch (error) {
       console.error("Error updating phase:", error);
-      // Here you could add a toast notification to inform the user of the error
     }
   };
 
@@ -102,7 +162,6 @@ export default function ProjectPhasesPage() {
                             {checkpoint.fields.map(field => (
                               <div key={field.id} className="flex items-center justify-between text-sm">
                                 {field.type === 'checkbox' ? (
-                                  <>
                                     <label htmlFor={field.id} className="flex items-center gap-3 cursor-pointer">
                                       <Checkbox 
                                         id={field.id} 
@@ -111,13 +170,23 @@ export default function ProjectPhasesPage() {
                                       />
                                       {field.label}
                                     </label>
-                                  </>
                                 ) : field.type === 'file' ? (
                                     <>
-                                        <span>{field.label}</span>
-                                        <Button variant="outline" size="sm">
-                                            <Paperclip className="mr-2 h-4 w-4"/>
-                                            {field.value ? "Ver Archivo" : "Adjuntar"}
+                                        <a href={field.value || '#'} target="_blank" rel="noopener noreferrer" className={`flex items-center gap-3 ${!field.value ? 'pointer-events-none' : ''}`}>
+                                            <span>{field.label}</span>
+                                        </a>
+                                        <Button 
+                                            variant="outline" 
+                                            size="sm"
+                                            onClick={() => handleFileButtonClick(phase.id, checkpoint.id, field.id, field.label)}
+                                            disabled={isUploading}
+                                        >
+                                            {isUploading && currentFieldInfo.current?.fieldId === field.id ? (
+                                                <Loader2 className="mr-2 h-4 w-4 animate-spin"/>
+                                            ) : (
+                                                <Paperclip className="mr-2 h-4 w-4"/>
+                                            )}
+                                            {field.value ? "Ver / Cambiar" : "Adjuntar"}
                                         </Button>
                                     </>
                                 ) : (
@@ -141,6 +210,12 @@ export default function ProjectPhasesPage() {
           </Accordion>
         </CardContent>
       </Card>
+       <input
+        type="file"
+        ref={fileInputRef}
+        onChange={handleFileSelected}
+        className="hidden"
+      />
     </div>
   );
 }
