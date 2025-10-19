@@ -1,58 +1,39 @@
 'use client';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
-import { errorEmitter } from '@/firebase/error-emitter';
-import { useEffect, useState } from 'react';
 
+import { useState, useEffect } from 'react';
+import { errorEmitter } from '@/firebase/error-emitter';
+import { FirestorePermissionError } from '@/firebase/errors';
+
+/**
+ * An invisible component that listens for globally emitted 'permission-error' events.
+ * It throws any received error to be caught by Next.js's global-error.tsx.
+ */
 export function FirebaseErrorListener() {
-  const [permissionError, setPermissionError] = useState<any>();
+  // Use the specific error type for the state for type safety.
+  const [error, setError] = useState<FirestorePermissionError | null>(null);
 
   useEffect(() => {
-    const handlePermissionError = (error: any) => {
-      setPermissionError(error);
+    // The callback now expects a strongly-typed error, matching the event payload.
+    const handleError = (error: FirestorePermissionError) => {
+      // Set error in state to trigger a re-render.
+      setError(error);
     };
 
-    errorEmitter.on('permission-error', handlePermissionError);
+    // The typed emitter will enforce that the callback for 'permission-error'
+    // matches the expected payload type (FirestorePermissionError).
+    errorEmitter.on('permission-error', handleError);
 
+    // Unsubscribe on unmount to prevent memory leaks.
     return () => {
-      errorEmitter.off('permission-error', handlePermissionError);
+      errorEmitter.off('permission-error', handleError);
     };
   }, []);
 
-  return (
-    <>
-      {permissionError && (
-        <AlertDialog open={!!permissionError}>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>
-                Firestore Security Rules Error
-              </AlertDialogTitle>
-              <AlertDialogDescription>
-                <p>
-                  Your request to access a Firestore resource was denied. Check
-                  your rules to ensure the request is allowed.
-                </p>
-                <pre className="mt-2 w-full overflow-auto rounded-md bg-slate-950 p-4 text-white">
-                  {JSON.stringify(permissionError.cause.context, null, 2)}
-                </pre>
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogAction onClick={() => setPermissionError(undefined)}>
-                Continue
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
-      )}
-    </>
-  );
+  // On re-render, if an error exists in state, throw it.
+  if (error) {
+    throw error;
+  }
+
+  // This component renders nothing.
+  return null;
 }
