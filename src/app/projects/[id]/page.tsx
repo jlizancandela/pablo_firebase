@@ -34,7 +34,7 @@ export default async function ProjectOverviewPage({ params }: { params: { id: st
               </div>
               <div>
                 <p className="font-medium text-muted-foreground">Project Type</p>
-                <p><Badge variant="secondary" className="text-base">{project.projectType}</Badge></p>
+                <p className="font-semibold text-base"><Badge variant="secondary" className="text-base">{project.projectType}</Badge></p>
               </div>
               <div className="md:col-span-2">
                 <p className="font-medium text-muted-foreground">Address</p>
