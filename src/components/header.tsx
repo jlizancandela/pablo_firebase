@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Building2, Download, RefreshCw, HardHat } from "lucide-react";
@@ -14,6 +15,7 @@ import {
 } from "./ui/dropdown-menu";
 import { useEffect, useState } from "react";
 
+// Definimos la interfaz para el evento, ya que no es estándar en todos los navegadores
 interface BeforeInstallPromptEvent extends Event {
   readonly platforms: Array<string>;
   readonly userChoice: Promise<{
@@ -29,7 +31,9 @@ export default function Header() {
 
   useEffect(() => {
     const handleBeforeInstallPrompt = (event: Event) => {
+      // Previene que el mini-infobar aparezca en Chrome
       event.preventDefault();
+      // Guarda el evento para que pueda ser disparado más tarde.
       setInstallPrompt(event as BeforeInstallPromptEvent);
     };
 
@@ -44,13 +48,16 @@ export default function Header() {
     if (!installPrompt) {
       return;
     }
+    // Muestra el prompt de instalación
     installPrompt.prompt();
+    // Espera a que el usuario responda al prompt
     installPrompt.userChoice.then((choiceResult) => {
       if (choiceResult.outcome === 'accepted') {
         console.log('El usuario aceptó instalar la PWA');
       } else {
         console.log('El usuario rechazó instalar la PWA');
       }
+      // Solo podemos usar el prompt una vez.
       setInstallPrompt(null);
     });
   };
