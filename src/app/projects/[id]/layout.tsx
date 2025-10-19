@@ -29,12 +29,16 @@ function ProjectProvider({ children }: { children: ReactNode }) {
   const { firestore, user } = useFirebase();
 
   const projectRef = useMemoFirebase(() => {
+    // CRITICAL FIX: Only construct the reference if BOTH user and id are available.
     if (!user || !id) return null;
     return doc(firestore, 'users', user.uid, 'projects', id);
   }, [firestore, user, id]);
 
+  // Pass the potentially null reference to useDoc.
+  // useDoc is designed to handle this and will wait until the ref is valid.
   const { data: project, isLoading } = useDoc<Project>(projectRef);
 
+  // Show a loading state while the document is being fetched OR while the reference is being constructed (e.g. user is loading)
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-screen">
@@ -43,6 +47,7 @@ function ProjectProvider({ children }: { children: ReactNode }) {
     );
   }
 
+  // If loading is finished and there's still no project data, THEN it's a 404.
   if (!project) {
     return notFound();
   }
