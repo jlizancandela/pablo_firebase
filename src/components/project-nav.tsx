@@ -1,3 +1,4 @@
+
 "use client";
 
 import Link from "next/link";
@@ -13,6 +14,7 @@ export default function ProjectNav({ projectId }: ProjectNavProps) {
 
   const navItems = [
     { name: "Resumen", href: `/projects/${projectId}` },
+    { name: "Fases de Obra", href: `/projects/${projectId}/phases` },
     { name: "Tareas", href: `/projects/${projectId}/tasks` },
     { name: "Fotos", href: `/projects/${projectId}/photos` },
     { name: "Visitas", href: `/projects/${projectId}/visits` },
@@ -20,7 +22,7 @@ export default function ProjectNav({ projectId }: ProjectNavProps) {
 
   return (
     <nav className="mt-8 border-b">
-      <div className="flex items-center gap-2 md:gap-4 -mb-px">
+      <div className="flex items-center gap-2 md:gap-4 -mb-px overflow-x-auto">
         {navItems.map((item) => {
           const isActive = pathname === item.href;
           return (
@@ -28,7 +30,7 @@ export default function ProjectNav({ projectId }: ProjectNavProps) {
               key={item.name}
               href={item.href}
               className={cn(
-                "py-3 px-2 md:px-4 font-medium text-muted-foreground transition-colors hover:text-primary border-b-2 border-transparent",
+                "py-3 px-2 md:px-4 font-medium text-muted-foreground transition-colors hover:text-primary border-b-2 border-transparent whitespace-nowrap",
                 isActive && "text-primary border-primary"
               )}
             >

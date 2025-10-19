@@ -1,3 +1,4 @@
+
 import { notFound } from "next/navigation";
 import { getProjectById } from "@/lib/data";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -11,9 +12,9 @@ export default async function ProjectOverviewPage({ params }: { params: { id: st
     notFound();
   }
 
-  const completedTasks = project.tasks.filter(t => t.completed).length;
-  const totalTasks = project.tasks.length;
-  const progress = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
+  const completedPhases = project.phases.filter(p => p.status === 'Completada').length;
+  const totalPhases = project.phases.length;
+  const progress = totalPhases > 0 ? Math.round((completedPhases / totalPhases) * 100) : 0;
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -52,8 +53,8 @@ export default async function ProjectOverviewPage({ params }: { params: { id: st
           <CardContent>
             <div>
               <div className="flex justify-between mb-2">
-                <span className="text-base font-medium text-foreground">Tareas Completadas</span>
-                <span className="text-sm font-medium text-foreground">{completedTasks} de {totalTasks}</span>
+                <span className="text-base font-medium text-foreground">Progreso de Fases</span>
+                <span className="text-sm font-medium text-foreground">{completedPhases} de {totalPhases}</span>
               </div>
               <Progress value={progress} className="h-3" />
               <p className="text-right text-sm text-muted-foreground mt-1">{progress}% Completado</p>
