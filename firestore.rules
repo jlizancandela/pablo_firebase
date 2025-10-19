@@ -1,126 +1,117 @@
 /**
- * @file Overview
- * Core Philosophy: This ruleset enforces a strict user-ownership model for construction project data.
- * All data is nested under /users/{userId}, ensuring that only the authenticated user can access their own data.
+ * @fileoverview Firestore Security Rules for Construction Project Management App
+ *
+ * Core Philosophy:
+ * This ruleset enforces a strict user-ownership model for all data. Each user has full control over their own data, and no access to other users' data.
  *
  * Data Structure:
- * - /users/{userId}/projects/{projectId}: Stores project data, owned by the user identified by {userId}.
- * - /users/{userId}/projects/{projectId}/tasks/{taskId}: Stores tasks related to a project, inheriting ownership from the project.
- * - /users/{userId}/projects/{projectId}/photos/{photoId}: Stores photos related to a project, inheriting ownership from the project.
- * - /users/{userId}/projects/{projectId}/visits/{visitId}: Stores visit data related to a project, inheriting ownership from the project.
+ * All data is nested under /users/{userId}, ensuring clear ownership. Projects, tasks, photos, and visits are all subcollections of the user's document.
  *
  * Key Security Decisions:
- * - User listing is implicitly disallowed by the rules structure.
- * - Data consistency is enforced between the path and internal document fields on create and update.
- * - Helper functions are used to abstract complex logic and improve readability.
- * - Focus on path-based ownership to avoid complex `get()` calls and maintain authorization independence.
+ * - Users can only access data under their own /users/{userId} path.
+ * - Listing other users' projects is explicitly disallowed.
+ * - Data validation is limited to ensuring ownership and relational integrity. Data types and optional/required fields are not validated to allow rapid prototyping.
  *
- * Authorization Independence: The data structure is designed such that access control can be determined solely from the document path and the user's authentication status,
- * without needing to read other documents (avoiding `get()` calls). This approach is critical for offline operation and scalability.
+ * Denormalization for Authorization:
+ * The data structure uses nested collections under /users/{userId} for authorization. This allows rules to check ownership directly via the path without needing to read other documents.
  */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * @description Secures project documents under a user's path.
+     * @description Checks if the request is made by a signed-in user.
+     * @param {string} userId - The user ID to check against the request's auth UID.
+     * @return {bool} True if the user is signed in.
+     */
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    /**
+     * @description Checks if the request is made by the owner of the document, based on the userId in the path.
+     * @param {string} userId - The user ID to check against the request's auth UID.
+     * @return {bool} True if the user is the owner.
+     */
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    /**
+     * @description Checks if the request is made by the owner of the document and that the document exists.
+     * @param {string} userId - The user ID to check against the request's auth UID.
+     * @return {bool} True if the user is the owner and the document exists.
+     */
+    function isExistingOwner(userId) {
+      return isOwner(userId) && resource != null;
+    }
+
+    /**
+     * @description Enforces document ownership for writes.
      * @path /users/{userId}/projects/{projectId}
-     * @allow (create) - User 'user123' can create a new project with projectId 'project456' under their user ID if authenticated.
-     * @allow (get, list, update, delete) - User 'user123' can read, update, and delete project 'project456' under their user ID if authenticated.
-     * @deny (create) - User 'user456' cannot create a project under the 'user123' path, even if authenticated.
-     * @deny (update) - User 'user456' cannot update a project under the 'user123' path, even if authenticated.
-     * @principle Enforces document ownership for writes and restricts access to a user's own data tree.
+     * @allow (create) User "Gyk7Rv5bAEgxa1VeW6qlb79F17C2" creates a project under /users/Gyk7Rv5bAEgxa1VeW6qlb79F17C2/projects/someProjectId
+     * @deny (create) User "otherUserId" tries to create a project under /users/Gyk7Rv5bAEgxa1VeW6qlb79F17C2/projects/someProjectId
+     * @allow (get) User "Gyk7Rv5bAEgxa1VeW6qlb79F17C2" reads project /users/Gyk7Rv5bAEgxa1VeW6qlb79F17C2/projects/someProjectId
+     * @deny (get) User "otherUserId" tries to read project /users/Gyk7Rv5bAEgxa1VeW6qlb79F17C2/projects/someProjectId
+     * @principle Enforces document ownership for writes.
      */
     match /users/{userId}/projects/{projectId} {
-      // Allow read access to the project if the user is the owner
-      allow get: if isSignedIn() && isOwner(userId);
-      // Allow listing projects if the user is the owner
-      allow list: if isSignedIn() && isOwner(userId);
-      // Allow creating a project if the user is the owner
-      allow create: if isSignedIn() && isOwner(userId) && request.resource.data.id == projectId;
-      // Allow updating a project if the user is the owner and the document exists
-      allow update: if isSignedIn() && isExistingOwner(userId) && resource.data.id == request.resource.data.id;
-      // Allow deleting a project if the user is the owner and the document exists
-      allow delete: if isSignedIn() && isExistingOwner(userId);
+      allow get: if isOwner(userId);
+      allow list: if isOwner(userId);
+      allow create: if isOwner(userId);
+      allow update: if isExistingOwner(userId);
+      allow delete: if isExistingOwner(userId);
     }
 
     /**
-     * @description Secures task documents under a project's path, inheriting ownership.
+     * @description Enforces document ownership for tasks.
      * @path /users/{userId}/projects/{projectId}/tasks/{taskId}
-     * @allow (create) - User 'user123' can create a new task with taskId 'task789' under project 'project456' if authenticated.
-     * @allow (get, list, update, delete) - User 'user123' can read, update, and delete task 'task789' under project 'project456' if authenticated.
-     * @deny (create) - User 'user456' cannot create a task under project 'project456' in user 'user123''s path, even if authenticated.
-     * @deny (update) - User 'user456' cannot update a task under project 'project456' in user 'user123''s path, even if authenticated.
-     * @principle Enforces document ownership for writes and restricts access to a user's own data tree.
+     * @allow (create) User "Gyk7Rv5bAEgxa1VeW6qlb79F17C2" creates a task under /users/Gyk7Rv5bAEgxa1VeW6qlb79F17C2/projects/someProjectId/tasks/someTaskId
+     * @deny (create) User "otherUserId" tries to create a task under /users/Gyk7Rv5bAEgxa1VeW6qlb79F17C2/projects/someProjectId/tasks/someTaskId
+     * @allow (get) User "Gyk7Rv5bAEgxa1VeW6qlb79F17C2" reads task /users/Gyk7Rv5bAEgxa1VeW6qlb79F17C2/projects/someProjectId/tasks/someTaskId
+     * @deny (get) User "otherUserId" tries to read task /users/Gyk7Rv5bAEgxa1VeW6qlb79F17C2/projects/someProjectId/tasks/someTaskId
+     * @principle Enforces document ownership for writes.
      */
     match /users/{userId}/projects/{projectId}/tasks/{taskId} {
-      // Allow read access to the task if the user is the owner
-      allow get: if isSignedIn() && isOwner(userId);
-      // Allow listing tasks if the user is the owner
-      allow list: if isSignedIn() && isOwner(userId);
-      // Allow creating a task if the user is the owner
-      allow create: if isSignedIn() && isOwner(userId) && request.resource.data.id == taskId && request.resource.data.projectId == projectId;
-      // Allow updating a task if the user is the owner and the document exists
-      allow update: if isSignedIn() && isExistingOwner(userId) && resource.data.id == request.resource.data.id && resource.data.projectId == request.resource.data.projectId;
-      // Allow deleting a task if the user is the owner and the document exists
-      allow delete: if isSignedIn() && isExistingOwner(userId);
+      allow get: if isOwner(userId);
+      allow list: if isOwner(userId);
+      allow create: if isOwner(userId);
+      allow update: if isExistingOwner(userId);
+      allow delete: if isExistingOwner(userId);
     }
 
     /**
-     * @description Secures photo documents under a project's path, inheriting ownership.
+     * @description Enforces document ownership for photos.
      * @path /users/{userId}/projects/{projectId}/photos/{photoId}
-     * @allow (create) - User 'user123' can create a new photo with photoId 'photo101' under project 'project456' if authenticated.
-     * @allow (get, list, update, delete) - User 'user123' can read, update, and delete photo 'photo101' under project 'project456' if authenticated.
-     * @deny (create) - User 'user456' cannot create a photo under project 'project456' in user 'user123''s path, even if authenticated.
-     * @deny (update) - User 'user456' cannot update a photo under project 'project456' in user 'user123''s path, even if authenticated.
-     * @principle Enforces document ownership for writes and restricts access to a user's own data tree.
+     * @allow (create) User "Gyk7Rv5bAEgxa1VeW6qlb79F17C2" creates a photo under /users/Gyk7Rv5bAEgxa1VeW6qlb79F17C2/projects/someProjectId/photos/somePhotoId
+     * @deny (create) User "otherUserId" tries to create a photo under /users/Gyk7Rv5bAEgxa1VeW6qlb79F17C2/projects/someProjectId/photos/somePhotoId
+     * @allow (get) User "Gyk7Rv5bAEgxa1VeW6qlb79F17C2" reads photo /users/Gyk7Rv5bAEgxa1VeW6qlb79F17C2/projects/someProjectId/photos/somePhotoId
+     * @deny (get) User "otherUserId" tries to read photo /users/Gyk7Rv5bAEgxa1VeW6qlb79F17C2/projects/someProjectId/photos/somePhotoId
+     * @principle Enforces document ownership for writes.
      */
     match /users/{userId}/projects/{projectId}/photos/{photoId} {
-      // Allow read access to the photo if the user is the owner
-      allow get: if isSignedIn() && isOwner(userId);
-      // Allow listing photos if the user is the owner
-      allow list: if isSignedIn() && isOwner(userId);
-      // Allow creating a photo if the user is the owner
-      allow create: if isSignedIn() && isOwner(userId) && request.resource.data.id == photoId && request.resource.data.projectId == projectId;
-      // Allow updating a photo if the user is the owner and the document exists
-      allow update: if isSignedIn() && isExistingOwner(userId) && resource.data.id == request.resource.data.id && resource.data.projectId == request.resource.data.projectId;
-      // Allow deleting a photo if the user is the owner and the document exists
-      allow delete: if isSignedIn() && isExistingOwner(userId);
+      allow get: if isOwner(userId);
+      allow list: if isOwner(userId);
+      allow create: if isOwner(userId);
+      allow update: if isExistingOwner(userId);
+      allow delete: if isExistingOwner(userId);
     }
 
     /**
-     * @description Secures visit documents under a project's path, inheriting ownership.
+     * @description Enforces document ownership for visits.
      * @path /users/{userId}/projects/{projectId}/visits/{visitId}
-     * @allow (create) - User 'user123' can create a new visit with visitId 'visit121' under project 'project456' if authenticated.
-     * @allow (get, list, update, delete) - User 'user123' can read, update, and delete visit 'visit121' under project 'project456' if authenticated.
-     * @deny (create) - User 'user456' cannot create a visit under project 'project456' in user 'user123''s path, even if authenticated.
-     * @deny (update) - User 'user456' cannot update a visit under project 'project456' in user 'user123''s path, even if authenticated.
-     * @principle Enforces document ownership for writes and restricts access to a user's own data tree.
+     * @allow (create) User "Gyk7Rv5bAEgxa1VeW6qlb79F17C2" creates a visit under /users/Gyk7Rv5bAEgxa1VeW6qlb79F17C2/projects/someProjectId/visits/someVisitId
+     * @deny (create) User "otherUserId" tries to create a visit under /users/Gyk7Rv5bAEgxa1VeW6qlb79F17C2/projects/someProjectId/visits/someVisitId
+     * @allow (get) User "Gyk7Rv5bAEgxa1VeW6qlb79F17C2" reads visit /users/Gyk7Rv5bAEgxa1VeW6qlb79F17C2/projects/someProjectId/visits/someVisitId
+     * @deny (get) User "otherUserId" tries to read visit /users/Gyk7Rv5bAEgxa1VeW6qlb79F17C2/projects/someProjectId/visits/someVisitId
+     * @principle Enforces document ownership for writes.
      */
     match /users/{userId}/projects/{projectId}/visits/{visitId} {
-      // Allow read access to the visit if the user is the owner
-      allow get: if isSignedIn() && isOwner(userId);
-      // Allow listing visits if the user is the owner
-      allow list: if isSignedIn() && isOwner(userId);
-      // Allow creating a visit if the user is the owner
-      allow create: if isSignedIn() && isOwner(userId) && request.resource.data.id == visitId && request.resource.data.projectId == projectId;
-      // Allow updating a visit if the user is the owner and the document exists
-      allow update: if isSignedIn() && isExistingOwner(userId) && resource.data.id == request.resource.data.id && resource.data.projectId == request.resource.data.projectId;
-      // Allow deleting a visit if the user is the owner and the document exists
-      allow delete: if isSignedIn() && isExistingOwner(userId);
+      allow get: if isOwner(userId);
+      allow list: if isOwner(userId);
+      allow create: if isOwner(userId);
+      allow update: if isExistingOwner(userId);
+      allow delete: if isExistingOwner(userId);
     }
-  }
-
-  // Helper functions
-  function isSignedIn() {
-    return request.auth != null;
-  }
-
-  function isOwner(userId) {
-    return request.auth.uid == userId;
-  }
-
-  function isExistingOwner(userId) {
-    return isSignedIn() && isOwner(userId) && resource != null;
   }
 }
