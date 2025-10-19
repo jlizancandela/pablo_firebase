@@ -15,6 +15,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { Timestamp } from "firebase/firestore";
 
 function getFileIcon(fileType: FileAttachment['fileType']) {
   switch (fileType) {
@@ -30,6 +31,18 @@ function getFileIcon(fileType: FileAttachment['fileType']) {
       return <FileText className="text-gray-500" />;
   }
 }
+
+function formatDate(date: any): string {
+    if (!date) return '';
+    if (date instanceof Timestamp) {
+        return date.toDate().toLocaleDateString();
+    }
+    if (date instanceof Date) {
+        return date.toLocaleDateString();
+    }
+    return new Date(date).toLocaleDateString();
+}
+
 
 export default function ProjectFilesPage() {
   const project = useProject();
@@ -78,7 +91,7 @@ export default function ProjectFilesPage() {
                     <TableCell>
                       <Badge variant="secondary">{file.phase}</Badge>
                     </TableCell>
-                    <TableCell>{new Date(file.uploadedAt).toLocaleDateString()}</TableCell>
+                    <TableCell>{formatDate(file.uploadedAt)}</TableCell>
                     <TableCell className="text-right">
                       <Button variant="ghost" size="icon" asChild>
                         <a href={file.url} download>
@@ -101,5 +114,3 @@ export default function ProjectFilesPage() {
     </div>
   );
 }
-
-    

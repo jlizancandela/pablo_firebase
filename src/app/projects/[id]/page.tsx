@@ -5,6 +5,18 @@ import { useProject } from "./layout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { Timestamp } from "firebase/firestore";
+
+function formatDate(date: any): string {
+    if (!date) return '';
+    if (date instanceof Timestamp) {
+        return date.toDate().toLocaleDateString();
+    }
+    if (date instanceof Date) {
+        return date.toLocaleDateString();
+    }
+    return new Date(date).toLocaleDateString();
+}
 
 export default function ProjectOverviewPage() {
   const project = useProject();
@@ -28,7 +40,7 @@ export default function ProjectOverviewPage() {
               </div>
               <div>
                 <p className="font-medium text-muted-foreground">Fecha de Inicio</p>
-                <p className="font-semibold text-base">{new Date(project.startDate).toLocaleDateString()}</p>
+                <p className="font-semibold text-base">{formatDate(project.startDate)}</p>
               </div>
               <div>
                 <p className="font-medium text-muted-foreground">Tipo de Proyecto</p>
@@ -62,5 +74,3 @@ export default function ProjectOverviewPage() {
     </div>
   );
 }
-
-    

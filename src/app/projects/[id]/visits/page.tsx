@@ -7,6 +7,19 @@ import { Button } from "@/components/ui/button";
 import { PlusCircle, CalendarDays, Users, ClipboardList, Edit } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { Timestamp } from "firebase/firestore";
+
+function formatDate(date: any): string {
+    if (!date) return '';
+    if (date instanceof Timestamp) {
+        return date.toDate().toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' });
+    }
+    if (date instanceof Date) {
+        return date.toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' });
+    }
+    return new Date(date).toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' });
+}
+
 
 export default function ProjectVisitsPage() {
   const project = useProject();
@@ -40,7 +53,7 @@ export default function ProjectVisitsPage() {
                   <div>
                     <CardTitle className="flex items-center gap-3">
                        <CalendarDays className="h-5 w-5 text-muted-foreground"/> 
-                       <span className="font-sans">{new Date(visit.date).toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
+                       <span className="font-sans">{formatDate(visit.date)}</span>
                     </CardTitle>
                     <CardDescription className="mt-1 ml-8">Fase: <Badge variant="secondary">{visit.phase}</Badge></CardDescription>
                   </div>
@@ -72,5 +85,3 @@ export default function ProjectVisitsPage() {
     </div>
   );
 }
-
-    

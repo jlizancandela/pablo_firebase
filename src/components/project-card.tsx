@@ -1,13 +1,27 @@
+
 import Link from 'next/link';
 import Image from 'next/image';
 import { Card, CardContent, CardFooter, CardHeader } from './ui/card';
 import type { Project } from '@/lib/data';
 import { Badge } from './ui/badge';
 import { CalendarDays, MapPin } from 'lucide-react';
+import { Timestamp } from 'firebase/firestore';
 
 interface ProjectCardProps {
   project: Project;
 }
+
+function formatDate(date: any): string {
+    if (!date) return '';
+    if (date instanceof Timestamp) {
+        return date.toDate().toLocaleDateString();
+    }
+    if (date instanceof Date) {
+        return date.toLocaleDateString();
+    }
+    return new Date(date).toLocaleDateString();
+}
+
 
 export default function ProjectCard({ project }: ProjectCardProps) {
   return (
@@ -35,7 +49,7 @@ export default function ProjectCard({ project }: ProjectCardProps) {
         <CardFooter className="flex justify-between items-center text-sm text-muted-foreground">
            <div className="flex items-center gap-2">
              <CalendarDays className="h-4 w-4" />
-             <span>{project.startDate.toLocaleDateString()}</span>
+             <span>{formatDate(project.startDate)}</span>
            </div>
           <Badge variant={project.projectType === 'Comercial' ? 'default' : project.projectType === 'Residencial' ? 'secondary' : 'outline'}>{project.projectType}</Badge>
         </CardFooter>
