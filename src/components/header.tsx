@@ -1,4 +1,6 @@
-import { Building2, Download, RefreshCw } from "lucide-react";
+'use client';
+
+import { Building2, Download, RefreshCw, HardHat } from "lucide-react";
 import Link from "next/link";
 import { Button } from "./ui/button";
 import { Avatar, AvatarFallback } from "./ui/avatar";
@@ -10,8 +12,49 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "./ui/dropdown-menu";
+import { useEffect, useState } from "react";
+
+interface BeforeInstallPromptEvent extends Event {
+  readonly platforms: Array<string>;
+  readonly userChoice: Promise<{
+    outcome: 'accepted' | 'dismissed',
+    platform: string,
+  }>;
+  prompt(): Promise<void>;
+}
+
 
 export default function Header() {
+  const [installPrompt, setInstallPrompt] = useState<BeforeInstallPromptEvent | null>(null);
+
+  useEffect(() => {
+    const handleBeforeInstallPrompt = (event: Event) => {
+      event.preventDefault();
+      setInstallPrompt(event as BeforeInstallPromptEvent);
+    };
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    };
+  }, []);
+
+  const handleInstallClick = () => {
+    if (!installPrompt) {
+      return;
+    }
+    installPrompt.prompt();
+    installPrompt.userChoice.then((choiceResult) => {
+      if (choiceResult.outcome === 'accepted') {
+        console.log('El usuario aceptó instalar la PWA');
+      } else {
+        console.log('El usuario rechazó instalar la PWA');
+      }
+      setInstallPrompt(null);
+    });
+  };
+
   return (
     <header className="sticky top-0 z-40 w-full border-b bg-card">
       <div className="container flex h-16 items-center">
@@ -20,6 +63,12 @@ export default function Header() {
           <span className="font-headline text-lg font-bold">ConstructWise</span>
         </Link>
         <div className="flex flex-1 items-center justify-end space-x-2">
+          {installPrompt && (
+            <Button variant="outline" size="sm" onClick={handleInstallClick}>
+              <HardHat className="mr-2 h-4 w-4" />
+              Instalar App
+            </Button>
+          )}
           <Button variant="ghost" size="sm" className="hidden sm:inline-flex">
             <RefreshCw className="mr-2 h-4 w-4" />
             Sincronizar Datos
