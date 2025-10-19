@@ -6,6 +6,15 @@ export type FieldType = 'checkbox' | 'text' | 'number' | 'date' | 'file' | 'sele
 export type PhaseStatus = 'No iniciada' | 'En curso' | 'Completada';
 export type CheckpointStatus = 'No iniciado' | 'En curso' | 'Completado';
 
+export interface FileAttachment {
+  id: string;
+  name: string;
+  url: string;
+  fileType: 'pdf' | 'dwg' | 'doc' | 'xls';
+  uploadedAt: Date;
+  phase: string;
+}
+
 export interface Field {
   id: string;
   label: string;
@@ -68,7 +77,8 @@ export interface Project {
   tasks: Task[];
   photos: Photo[];
   visits: Visit[];
-  phases: Phase[]; // Añadido
+  phases: Phase[];
+  files: FileAttachment[];
 }
 
 const findImage = (id: string) => PlaceHolderImages.find(img => img.id === id) || { imageUrl: '', imageHint: '' };
@@ -100,7 +110,7 @@ const projectPhases: Phase[] = [
         closingCriteria: "Todos los checkpoints completados (visado solo si aplica)",
         checkpoints: [
             { id: "cp-2.1", title: "Proyecto básico redactado", status: "Completado", fields: [{ id: "f-2.1.1", label: "Proyecto básico completado", type: "checkbox", value: true, required: true }] },
-            { id: "cp-2.2", title: "Proyecto de ejecución completo", status: "No iniciado", fields: [{ id: "f-2.2.1", label: "Proyecto de ejecución desarrollado", type: "checkbox", value: false, required: true }] },
+            { id: "cp-2.2", title: "Proyecto de ejecución completo", status: "No iniciado", fields: [{ id: "f-2.2.1", label: "Proyecto de ejecución desarrollado", type: "file", value: false, required: true }] },
         ]
     },
     // Las demás fases se añadirían aquí...
@@ -141,6 +151,11 @@ const projectsData: Project[] = [
             { id: 'visit-2', date: new Date('2023-02-05'), phase: 'Estructura', attendees: ['Tom, Sarah'], observations: 'La estructura está completa y cumple con el código. Se necesitan algunos ajustes en la pared oeste.' },
         ],
         phases: projectPhases,
+        files: [
+            { id: 'file-1', name: 'Planos Estructurales.pdf', url: '#', fileType: 'pdf', uploadedAt: new Date('2023-01-10'), phase: 'FASE 2' },
+            { id: 'file-2', name: 'Contrato de Obra.doc', url: '#', fileType: 'doc', uploadedAt: new Date('2023-01-12'), phase: 'FASE 4' },
+            { id: 'file-3', name: 'Licencia Municipal.pdf', url: '#', fileType: 'pdf', uploadedAt: new Date('2023-02-20'), phase: 'FASE 3' },
+        ],
     },
     {
         id: 'proj-2',
@@ -162,6 +177,7 @@ const projectsData: Project[] = [
             { id: 'visit-3', date: new Date('2022-09-10'), phase: 'Pre-construcción', attendees: ['Lex, Tom'], observations: 'Estudio final del sitio completado. Listo para empezar la excavación.' },
         ],
         phases: projectPhases.map(p => ({...p, status: 'No iniciada', checkpoints: p.checkpoints.map(c => ({...c, status: 'No iniciado'})) })),
+        files: [],
     },
     {
         id: 'proj-3',
@@ -175,6 +191,7 @@ const projectsData: Project[] = [
         tasks: [],
         photos: [],
         visits: [],
+        files: [],
         phases: projectPhases.map(p => ({...p, status: 'No iniciada', checkpoints: p.checkpoints.map(c => ({...c, status: 'No iniciado'})) })),
     }
 ];

@@ -17,6 +17,7 @@ export default function ProjectNav({ projectId }: ProjectNavProps) {
     { name: "Fases de Obra", href: `/projects/${projectId}/phases` },
     { name: "Tareas", href: `/projects/${projectId}/tasks` },
     { name: "Fotos", href: `/projects/${projectId}/photos` },
+    { name: "Archivos", href: `/projects/${projectId}/files` },
     { name: "Visitas", href: `/projects/${projectId}/visits` },
   ];
 
