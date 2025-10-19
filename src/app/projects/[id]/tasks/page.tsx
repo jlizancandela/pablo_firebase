@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { notFound } from "next/navigation";
-import { getProjectById, Task } from "@/lib/data";
+import { getProjectById, Project, Task } from "@/lib/data";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -20,11 +20,22 @@ import {
 import { cn } from "@/lib/utils";
 
 export default function ProjectTasksPage({ params }: { params: { id: string } }) {
-  const project = getProjectById(params.id);
-  const [tasks, setTasks] = useState<Task[]>(project?.tasks || []);
+  const [project, setProject] = useState<Project | null>(null);
+  const [tasks, setTasks] = useState<Task[]>([]);
+
+  useEffect(() => {
+    getProjectById(params.id).then(proj => {
+      if (!proj) {
+        notFound();
+      } else {
+        setProject(proj);
+        setTasks(proj.tasks);
+      }
+    });
+  }, [params.id]);
 
   if (!project) {
-    notFound();
+    return <div>Loading...</div>;
   }
 
   const handleTaskCheck = (taskId: string, checked: boolean) => {

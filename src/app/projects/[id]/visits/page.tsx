@@ -6,8 +6,8 @@ import { PlusCircle, CalendarDays, Users, ClipboardList, Edit } from "lucide-rea
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 
-export default function ProjectVisitsPage({ params }: { params: { id: string } }) {
-  const project = getProjectById(params.id);
+export default async function ProjectVisitsPage({ params }: { params: { id: string } }) {
+  const project = await getProjectById(params.id);
 
   if (!project) {
     notFound();

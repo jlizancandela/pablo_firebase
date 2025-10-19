@@ -4,14 +4,14 @@ import Header from "@/components/header";
 import ProjectHeader from "@/components/project-header";
 import ProjectNav from "@/components/project-nav";
 
-export default function ProjectLayout({
+export default async function ProjectLayout({
   children,
   params,
 }: {
   children: React.ReactNode;
   params: { id: string };
 }) {
-  const project = getProjectById(params.id);
+  const project = await getProjectById(params.id);
 
   if (!project) {
     notFound();

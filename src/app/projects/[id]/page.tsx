@@ -4,8 +4,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 
-export default function ProjectOverviewPage({ params }: { params: { id: string } }) {
-  const project = getProjectById(params.id);
+export default async function ProjectOverviewPage({ params }: { params: { id: string } }) {
+  const project = await getProjectById(params.id);
 
   if (!project) {
     notFound();

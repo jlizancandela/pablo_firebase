@@ -5,8 +5,8 @@ import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Camera, PlusCircle, Trash2 } from "lucide-react";
 
-export default function ProjectPhotosPage({ params }: { params: { id: string } }) {
-  const project = getProjectById(params.id);
+export default async function ProjectPhotosPage({ params }: { params: { id: string } }) {
+  const project = await getProjectById(params.id);
 
   if (!project) {
     notFound();

@@ -42,10 +42,10 @@ const findImage = (id: string) => PlaceHolderImages.find(img => img.id === id) |
 
 const projectsData: Project[] = [];
 
-export const getProjects = (): Project[] => {
-  return projectsData;
+export const getProjects = async (): Promise<Project[]> => {
+  return Promise.resolve(projectsData);
 };
 
-export const getProjectById = (id: string): Project | undefined => {
-  return projectsData.find(p => p.id === id);
+export const getProjectById = async (id: string): Promise<Project | undefined> => {
+  return Promise.resolve(projectsData.find(p => p.id === id));
 };

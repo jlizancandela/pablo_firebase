@@ -1,11 +1,12 @@
+
 import Header from "@/components/header";
 import ProjectCard from "@/components/project-card";
 import { Button } from "@/components/ui/button";
 import { getProjects } from "@/lib/data";
 import { PlusCircle } from "lucide-react";
 
-export default function Home() {
-  const projects = getProjects();
+export default async function Home() {
+  const projects = await getProjects();
 
   return (
     <div className="min-h-screen w-full bg-background">
