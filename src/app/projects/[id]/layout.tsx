@@ -84,5 +84,3 @@ function ProjectHeaderWrapper() {
   const project = useProject();
   return <ProjectHeader project={project} />;
 }
-
-    
