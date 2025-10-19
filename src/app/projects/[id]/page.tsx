@@ -1,16 +1,13 @@
 
-import { notFound } from "next/navigation";
-import { getProjectById } from "@/lib/data";
+'use client';
+
+import { useProject } from "./layout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 
-export default async function ProjectOverviewPage({ params }: { params: { id: string } }) {
-  const project = await getProjectById(params.id);
-
-  if (!project) {
-    notFound();
-  }
+export default function ProjectOverviewPage() {
+  const project = useProject();
 
   const completedPhases = project.phases.filter(p => p.status === 'Completada').length;
   const totalPhases = project.phases.length;
@@ -31,7 +28,7 @@ export default async function ProjectOverviewPage({ params }: { params: { id: st
               </div>
               <div>
                 <p className="font-medium text-muted-foreground">Fecha de Inicio</p>
-                <p className="font-semibold text-base">{project.startDate.toLocaleDateString()}</p>
+                <p className="font-semibold text-base">{new Date(project.startDate).toLocaleDateString()}</p>
               </div>
               <div>
                 <p className="font-medium text-muted-foreground">Tipo de Proyecto</p>
@@ -65,3 +62,5 @@ export default async function ProjectOverviewPage({ params }: { params: { id: st
     </div>
   );
 }
+
+    

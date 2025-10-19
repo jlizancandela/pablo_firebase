@@ -1,7 +1,9 @@
 
-import { notFound } from "next/navigation";
-import { getProjectById, FileAttachment } from "@/lib/data";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+'use client';
+
+import { useProject } from "../layout";
+import { FileAttachment } from "@/lib/data";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { PlusCircle, FileText, Download, Trash2, FileArchive } from "lucide-react";
 import {
@@ -29,12 +31,8 @@ function getFileIcon(fileType: FileAttachment['fileType']) {
   }
 }
 
-export default async function ProjectFilesPage({ params }: { params: { id: string } }) {
-  const project = await getProjectById(params.id);
-
-  if (!project) {
-    notFound();
-  }
+export default function ProjectFilesPage() {
+  const project = useProject();
 
   return (
     <div className="space-y-6">
@@ -80,7 +78,7 @@ export default async function ProjectFilesPage({ params }: { params: { id: strin
                     <TableCell>
                       <Badge variant="secondary">{file.phase}</Badge>
                     </TableCell>
-                    <TableCell>{file.uploadedAt.toLocaleDateString()}</TableCell>
+                    <TableCell>{new Date(file.uploadedAt).toLocaleDateString()}</TableCell>
                     <TableCell className="text-right">
                       <Button variant="ghost" size="icon" asChild>
                         <a href={file.url} download>
@@ -103,3 +101,5 @@ export default async function ProjectFilesPage({ params }: { params: { id: strin
     </div>
   );
 }
+
+    

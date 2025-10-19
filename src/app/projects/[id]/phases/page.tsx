@@ -1,11 +1,11 @@
 
-import { notFound } from "next/navigation";
-import { getProjectById } from "@/lib/data";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+'use client';
+
+import { useProject } from "../layout";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Badge } from "@/components/ui/badge";
 import { CheckCircle2, Circle, Radio, Paperclip } from "lucide-react";
-import { cn } from "@/lib/utils";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 
@@ -21,12 +21,8 @@ const statusIcon = (status: 'No iniciada' | 'En curso' | 'Completada') => {
   return <CheckCircle2 className="h-5 w-5 text-green-500" />;
 }
 
-export default async function ProjectPhasesPage({ params }: { params: { id: string } }) {
-  const project = await getProjectById(params.id);
-
-  if (!project) {
-    notFound();
-  }
+export default function ProjectPhasesPage() {
+  const project = useProject();
 
   return (
     <div className="space-y-6">
@@ -106,3 +102,5 @@ export default async function ProjectPhasesPage({ params }: { params: { id: stri
     </div>
   );
 }
+
+    

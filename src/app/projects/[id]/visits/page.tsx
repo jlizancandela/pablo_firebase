@@ -1,17 +1,15 @@
-import { notFound } from "next/navigation";
-import { getProjectById } from "@/lib/data";
+
+'use client';
+
+import { useProject } from "../layout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { PlusCircle, CalendarDays, Users, ClipboardList, Edit } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 
-export default async function ProjectVisitsPage({ params }: { params: { id: string } }) {
-  const project = await getProjectById(params.id);
-
-  if (!project) {
-    notFound();
-  }
+export default function ProjectVisitsPage() {
+  const project = useProject();
 
   return (
     <div className="space-y-6">
@@ -42,7 +40,7 @@ export default async function ProjectVisitsPage({ params }: { params: { id: stri
                   <div>
                     <CardTitle className="flex items-center gap-3">
                        <CalendarDays className="h-5 w-5 text-muted-foreground"/> 
-                       <span className="font-sans">{visit.date.toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
+                       <span className="font-sans">{new Date(visit.date).toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
                     </CardTitle>
                     <CardDescription className="mt-1 ml-8">Fase: <Badge variant="secondary">{visit.phase}</Badge></CardDescription>
                   </div>
@@ -74,3 +72,5 @@ export default async function ProjectVisitsPage({ params }: { params: { id: stri
     </div>
   );
 }
+
+    

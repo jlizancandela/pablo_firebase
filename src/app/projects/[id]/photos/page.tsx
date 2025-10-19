@@ -1,16 +1,14 @@
-import { notFound } from "next/navigation";
+
+'use client';
+
 import Image from "next/image";
-import { getProjectById } from "@/lib/data";
+import { useProject } from "../layout";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Camera, PlusCircle, Trash2 } from "lucide-react";
 
-export default async function ProjectPhotosPage({ params }: { params: { id: string } }) {
-  const project = await getProjectById(params.id);
-
-  if (!project) {
-    notFound();
-  }
+export default function ProjectPhotosPage() {
+  const project = useProject();
 
   return (
     <div className="space-y-6">
@@ -63,3 +61,5 @@ export default async function ProjectPhotosPage({ params }: { params: { id: stri
     </div>
   );
 }
+
+    
