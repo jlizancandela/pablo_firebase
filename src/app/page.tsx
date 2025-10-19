@@ -1,12 +1,23 @@
 
+'use client';
+
+import { useState, useEffect } from 'react';
 import Header from "@/components/header";
 import ProjectCard from "@/components/project-card";
 import { Button } from "@/components/ui/button";
-import { getProjects } from "@/lib/data";
+import { getProjects, Project } from "@/lib/data";
 import { PlusCircle } from "lucide-react";
 
-export default async function Home() {
-  const projects = await getProjects();
+export default function Home() {
+  const [projects, setProjects] = useState<Project[]>([]);
+
+  useEffect(() => {
+    const fetchProjects = async () => {
+      const projectsData = await getProjects();
+      setProjects(projectsData);
+    };
+    fetchProjects();
+  }, []);
 
   return (
     <div className="min-h-screen w-full bg-background">
