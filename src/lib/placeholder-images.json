@@ -1,3 +1,64 @@
 {
-  "placeholderImages": []
+  "placeholderImages": [
+    {
+      "id": "project-cover-1",
+      "description": "Modern building under construction.",
+      "imageUrl": "https://images.unsplash.com/photo-1551295022-de5522c94e08?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxjb25zdHJ1Y3Rpb24lMjBidWlsZGluZ3xlbnwwfHx8fDE3NjA4MjMyNjJ8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "construction building"
+    },
+    {
+      "id": "project-cover-2",
+      "description": "Interior renovation of a living room.",
+      "imageUrl": "https://images.unsplash.com/photo-1646592491741-e79ae5953486?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw5fHxpbnRlcmlvciUyMHJlbm92YXRpb258ZW58MHx8fHwxNzYwODUzMzY1fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "interior renovation"
+    },
+    {
+      "id": "project-cover-3",
+      "description": "Skyscraper construction site with cranes.",
+      "imageUrl": "https://images.unsplash.com/photo-1634250878303-0c059dc54c4b?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxMHx8c2t5c2NyYXBlciUyMGNyYW5lfGVufDB8fHx8MTc2MDg2NDExNXww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "skyscraper crane"
+    },
+    {
+      "id": "project-cover-4",
+      "description": "Architectural blueprint on a wooden table.",
+      "imageUrl": "https://images.unsplash.com/photo-1599110906632-28d25094470f?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxhcmNoaXRlY3QlMjBibHVlcHJpbnR8ZW58MHx8fHwxNzYwODY0MTE0fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "architect blueprint"
+    },
+    {
+      "id": "project-gallery-1",
+      "description": "Exposed wiring during electrical installation.",
+      "imageUrl": "https://images.unsplash.com/photo-1601462904263-f2fa0c851cb9?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw3fHxlbGVjdHJpY2FsJTIwd2lyaW5nfGVufDB8fHx8MTc2MDg1MTkzN3ww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "electrical wiring"
+    },
+    {
+      "id": "project-gallery-2",
+      "description": "Freshly poured concrete foundation.",
+      "imageUrl": "https://images.unsplash.com/photo-1654783859059-7d0f582891e4?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxMHx8Y29uY3JldGUlMjBmb3VuZGF0aW9ufGVufDB8fHx8MTc2MDg2NDExNHww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "concrete foundation"
+    },
+    {
+      "id": "project-gallery-3",
+      "description": "Plumbing pipes installed in a wall frame.",
+      "imageUrl": "https://images.unsplash.com/photo-1738918897772-0ba101be25c8?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxMHx8cGx1bWJpbmclMjBwaXBlc3xlbnwwfHx8fDE3NjA3NTAyODN8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "plumbing pipes"
+    },
+    {
+      "id": "project-gallery-4",
+      "description": "Drywall installation in progress.",
+      "imageUrl": "https://images.unsplash.com/photo-1695651832926-66591245a88c?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw5fHxkcnl3YWxsJTIwaW5zdGFsbGF0aW9ufGVufDB8fHx8MTc2MDgwNzQyM3ww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "drywall installation"
+    },
+    {
+      "id": "project-gallery-5",
+      "description": "Team meeting on site with hard hats.",
+      "imageUrl": "https://images.unsplash.com/photo-1693907795785-5cf4927a70fa?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw3fHxjb25zdHJ1Y3Rpb24lMjBtZWV0aW5nfGVufDB8fHx8MTc2MDg2NDExNHww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "construction meeting"
+    },
+    {
+      "id": "project-gallery-6",
+      "description": "A worker cutting wood.",
+      "imageUrl": "https://images.unsplash.com/photo-1607083193177-882510935eb4?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxMHx8Y2FycGVudGVyJTIwd29vZHxlbnwwfHx8fDE3NjA4NDUyOTl8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "carpenter wood"
+    }
+  ]
 }
