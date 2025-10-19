@@ -4,9 +4,10 @@ import { getProjectById } from "@/lib/data";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Badge } from "@/components/ui/badge";
-import { CheckCircle2, Circle, Radio } from "lucide-react";
+import { CheckCircle2, Circle, Radio, Paperclip } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Button } from "@/components/ui/button";
 
 const statusBadgeVariant = (status: 'No iniciada' | 'En curso' | 'Completada'): 'outline' | 'secondary' | 'default' => {
   if (status === 'No iniciada') return 'outline';
@@ -65,12 +66,22 @@ export default async function ProjectPhasesPage({ params }: { params: { id: stri
                           </CardHeader>
                           <CardContent className="space-y-3">
                             {checkpoint.fields.map(field => (
-                              <div key={field.id} className="flex items-center gap-3 text-sm">
+                              <div key={field.id} className="flex items-center justify-between text-sm">
                                 {field.type === 'checkbox' ? (
                                   <>
-                                    <Checkbox id={field.id} checked={!!field.value} readOnly />
-                                    <label htmlFor={field.id}>{field.label}</label>
+                                    <label htmlFor={field.id} className="flex items-center gap-3 cursor-pointer">
+                                      <Checkbox id={field.id} checked={!!field.value} readOnly />
+                                      {field.label}
+                                    </label>
                                   </>
+                                ) : field.type === 'file' ? (
+                                    <>
+                                        <span>{field.label}</span>
+                                        <Button variant="outline" size="sm">
+                                            <Paperclip className="mr-2 h-4 w-4"/>
+                                            {field.value ? "Ver Archivo" : "Adjuntar"}
+                                        </Button>
+                                    </>
                                 ) : (
                                   <span>{field.label}: {String(field.value)}</span>
                                 )}
@@ -95,4 +106,3 @@ export default async function ProjectPhasesPage({ params }: { params: { id: stri
     </div>
   );
 }
-
