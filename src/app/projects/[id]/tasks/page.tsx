@@ -19,21 +19,98 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { cn } from "@/lib/utils";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogFooter,
+  DialogClose,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { useForm, Controller } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+import { useFirebase } from "@/firebase";
+import { doc, updateDoc } from "firebase/firestore";
+
+const taskSchema = z.object({
+  description: z.string().min(1, "La descripción es obligatoria."),
+  assigneeName: z.string().min(1, "El nombre del asignado es obligatorio."),
+  priority: z.enum(["Alta", "Media", "Baja"]),
+});
+
+type TaskFormData = z.infer<typeof taskSchema>;
+
 
 export default function ProjectTasksPage() {
   const project = useProject();
-  const [tasks, setTasks] = useState<Task[]>(project.tasks || []);
+  const { firestore, user } = useFirebase();
+  const [open, setOpen] = useState(false);
 
-  const handleTaskCheck = (taskId: string, checked: boolean) => {
-    // Here you would update the task in Firestore
-    // For now, we just update the local state
-    setTasks(currentTasks => 
-      currentTasks.map(task => 
-        task.id === taskId ? { ...task, completed: checked } : task
-      )
+  const {
+    control,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useForm<TaskFormData>({
+    resolver: zodResolver(taskSchema),
+    defaultValues: {
+      description: "",
+      assigneeName: "",
+      priority: "Media",
+    },
+  });
+
+  const projectRef = doc(firestore, 'users', user!.uid, 'projects', project.id);
+
+  const handleTaskCheck = async (taskId: string, checked: boolean) => {
+    const updatedTasks = project.tasks.map(task =>
+      task.id === taskId ? { ...task, completed: checked } : task
     );
+    try {
+      await updateDoc(projectRef, { tasks: updatedTasks });
+    } catch (error) {
+      console.error("Error updating task: ", error);
+    }
   };
   
+  const onSubmit = async (data: TaskFormData) => {
+    const initials = data.assigneeName
+      .split(' ')
+      .map(n => n[0])
+      .join('')
+      .substring(0, 2)
+      .toUpperCase();
+      
+    const newTask: Task = {
+      id: `task_${Date.now()}`, // Simple unique ID
+      description: data.description,
+      assignee: { name: data.assigneeName, initials: initials },
+      priority: data.priority,
+      completed: false,
+    };
+
+    try {
+      await updateDoc(projectRef, {
+        tasks: [...project.tasks, newTask]
+      });
+      reset();
+      setOpen(false);
+    } catch (error) {
+      console.error("Error adding task: ", error);
+    }
+  };
+
   const priorityBadgeVariant = (priority: 'Alta' | 'Media' | 'Baja'): 'destructive' | 'secondary' | 'outline' => {
     if (priority === 'Alta') return 'destructive';
     if (priority === 'Media') return 'secondary';
@@ -44,10 +121,76 @@ export default function ProjectTasksPage() {
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle className="font-headline">Lista de Tareas</CardTitle>
-        <Button>
-          <PlusCircle className="mr-2 h-4 w-4" />
-          Nueva Tarea
-        </Button>
+        <Dialog open={open} onOpenChange={setOpen}>
+          <DialogTrigger asChild>
+            <Button>
+              <PlusCircle className="mr-2 h-4 w-4" />
+              Nueva Tarea
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-[425px]">
+            <DialogHeader>
+              <DialogTitle>Crear nueva tarea</DialogTitle>
+            </DialogHeader>
+            <form onSubmit={handleSubmit(onSubmit)}>
+              <div className="grid gap-4 py-4">
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="description" className="text-right">
+                    Descripción
+                  </Label>
+                  <Controller
+                    name="description"
+                    control={control}
+                    render={({ field }) => (
+                      <Input id="description" {...field} className="col-span-3" />
+                    )}
+                  />
+                  {errors.description && <p className="col-span-4 text-red-500 text-xs text-right">{errors.description.message}</p>}
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="assigneeName" className="text-right">
+                    Asignado
+                  </Label>
+                   <Controller
+                    name="assigneeName"
+                    control={control}
+                    render={({ field }) => (
+                      <Input id="assigneeName" {...field} className="col-span-3" />
+                    )}
+                  />
+                   {errors.assigneeName && <p className="col-span-4 text-red-500 text-xs text-right">{errors.assigneeName.message}</p>}
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="priority" className="text-right">
+                    Prioridad
+                  </Label>
+                   <Controller
+                      name="priority"
+                      control={control}
+                      render={({ field }) => (
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <SelectTrigger className="col-span-3">
+                            <SelectValue placeholder="Seleccionar prioridad" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Alta">Alta</SelectItem>
+                            <SelectItem value="Media">Media</SelectItem>
+                            <SelectItem value="Baja">Baja</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      )}
+                    />
+                </div>
+              </div>
+              <DialogFooter>
+                <DialogClose asChild>
+                  <Button type="button" variant="secondary">Cancelar</Button>
+                </DialogClose>
+                <Button type="submit">Guardar Tarea</Button>
+              </DialogFooter>
+            </form>
+          </DialogContent>
+        </Dialog>
       </CardHeader>
       <CardContent>
         <div className="border rounded-md">
@@ -61,7 +204,7 @@ export default function ProjectTasksPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {tasks.map((task) => (
+              {project.tasks.map((task) => (
                 <TableRow key={task.id} data-state={task.completed ? 'completed' : 'pending'}>
                   <TableCell className="p-2">
                     <div className="flex items-center justify-center h-full">
@@ -93,6 +236,12 @@ export default function ProjectTasksPage() {
             </TableBody>
           </Table>
         </div>
+        {project.tasks.length === 0 && (
+          <div className="text-center py-10 text-muted-foreground">
+            <p>No hay tareas en este proyecto todavía.</p>
+            <p className="text-sm">¡Crea tu primera tarea para empezar!</p>
+          </div>
+        )}
       </CardContent>
     </Card>
   );

@@ -1,3 +1,4 @@
+
 import Image from 'next/image';
 import type { Project } from '@/lib/data';
 import { Button } from './ui/button';
@@ -10,6 +11,8 @@ interface ProjectHeaderProps {
 }
 
 export default function ProjectHeader({ project }: ProjectHeaderProps) {
+  const openTasks = project.tasks ? project.tasks.filter(t => !t.completed).length : 0;
+  
   return (
     <div className="mt-8">
       <div className="relative h-64 w-full rounded-lg overflow-hidden">
@@ -32,7 +35,7 @@ export default function ProjectHeader({ project }: ProjectHeaderProps) {
             <div className="flex-1 flex justify-around">
                 <div className="text-center">
                     <ListTodo className="h-6 w-6 mx-auto text-primary"/>
-                    <p className="text-2xl font-bold">{project.tasks.filter(t => !t.completed).length}</p>
+                    <p className="text-2xl font-bold">{openTasks}</p>
                     <p className="text-sm text-muted-foreground">Tareas Abiertas</p>
                 </div>
                 <div className="text-center">
@@ -56,3 +59,5 @@ export default function ProjectHeader({ project }: ProjectHeaderProps) {
     </div>
   );
 }
+
+    
