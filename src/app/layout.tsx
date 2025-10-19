@@ -45,6 +45,7 @@ export default function RootLayout({
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet" />
         <title>ConstructWise</title>
         <meta name="description" content="Gestiona tus proyectos de construcción con facilidad, online y offline." />
+        <link rel="apple-touch-icon" href="/icons/icon-192x192.png" />
       </head>
       <body className="font-body antialiased">
         <FirebaseClientProvider>
