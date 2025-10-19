@@ -25,11 +25,11 @@ export default function Home() {
       <main className="container py-8">
         <div className="flex items-center justify-between mb-8">
           <h1 className="text-3xl font-headline font-bold tracking-tight">
-            Projects Dashboard
+            Panel de Proyectos
           </h1>
           <Button>
             <PlusCircle className="mr-2 h-4 w-4" />
-            New Project
+            Nuevo Proyecto
           </Button>
         </div>
 

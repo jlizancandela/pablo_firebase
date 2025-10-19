@@ -22,11 +22,11 @@ export default function Header() {
         <div className="flex flex-1 items-center justify-end space-x-2">
           <Button variant="ghost" size="sm" className="hidden sm:inline-flex">
             <RefreshCw className="mr-2 h-4 w-4" />
-            Sync Data
+            Sincronizar Datos
           </Button>
           <Button variant="outline" size="sm" className="hidden sm:inline-flex">
             <Download className="mr-2 h-4 w-4" />
-            Export All
+            Exportar Todo
           </Button>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -39,15 +39,15 @@ export default function Header() {
             <DropdownMenuContent className="w-56" align="end" forceMount>
               <DropdownMenuLabel className="font-normal">
                 <div className="flex flex-col space-y-1">
-                  <p className="text-sm font-medium leading-none">ConstructWise User</p>
+                  <p className="text-sm font-medium leading-none">Usuario de ConstructWise</p>
                   <p className="text-xs leading-none text-muted-foreground">
-                    user@example.com
+                    usuario@example.com
                   </p>
                 </div>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem>Settings</DropdownMenuItem>
-              <DropdownMenuItem>Log out</DropdownMenuItem>
+              <DropdownMenuItem>Configuración</DropdownMenuItem>
+              <DropdownMenuItem>Cerrar Sesión</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>

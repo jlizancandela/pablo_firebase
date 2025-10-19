@@ -16,21 +16,21 @@ export default async function ProjectVisitsPage({ params }: { params: { id: stri
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-headline font-bold">Site Visit Logs</h2>
+        <h2 className="text-2xl font-headline font-bold">Registro de Visitas</h2>
         <Button variant="outline">
           <PlusCircle className="mr-2 h-4 w-4" />
-          Log New Visit
+          Registrar Nueva Visita
         </Button>
       </div>
 
       {project.visits.length === 0 ? (
           <Card className="flex flex-col items-center justify-center py-20 border-dashed">
             <ClipboardList className="h-12 w-12 text-muted-foreground mb-4" />
-            <h3 className="text-xl font-semibold">No Visits Logged</h3>
-            <p className="text-muted-foreground">Log site visits to keep a record of on-site activities.</p>
+            <h3 className="text-xl font-semibold">No Hay Visitas Registradas</h3>
+            <p className="text-muted-foreground">Registra las visitas a obra para mantener un historial de actividades.</p>
              <Button className="mt-4">
               <PlusCircle className="mr-2 h-4 w-4" />
-              Log First Visit
+              Registrar Primera Visita
             </Button>
           </Card>
         ) : (
@@ -42,13 +42,13 @@ export default async function ProjectVisitsPage({ params }: { params: { id: stri
                   <div>
                     <CardTitle className="flex items-center gap-3">
                        <CalendarDays className="h-5 w-5 text-muted-foreground"/> 
-                       <span className="font-sans">{visit.date.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
+                       <span className="font-sans">{visit.date.toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
                     </CardTitle>
-                    <CardDescription className="mt-1 ml-8">Phase: <Badge variant="secondary">{visit.phase}</Badge></CardDescription>
+                    <CardDescription className="mt-1 ml-8">Fase: <Badge variant="secondary">{visit.phase}</Badge></CardDescription>
                   </div>
                   <Button variant="ghost" size="icon">
                     <Edit className="h-4 w-4" />
-                    <span className="sr-only">Edit Visit</span>
+                    <span className="sr-only">Editar Visita</span>
                   </Button>
                 </div>
               </CardHeader>
@@ -56,13 +56,13 @@ export default async function ProjectVisitsPage({ params }: { params: { id: stri
                 <Separator className="mb-4" />
                 <div className="grid md:grid-cols-3 gap-6">
                     <div className="md:col-span-1 space-y-2">
-                        <h4 className="font-semibold flex items-center gap-2"><Users className="h-5 w-5 text-muted-foreground"/>Attendees</h4>
+                        <h4 className="font-semibold flex items-center gap-2"><Users className="h-5 w-5 text-muted-foreground"/>Asistentes</h4>
                         <div className="flex flex-wrap gap-1">
                             {visit.attendees.map(attendee => <Badge key={attendee} variant="outline">{attendee}</Badge>)}
                         </div>
                     </div>
                     <div className="md:col-span-2 space-y-2">
-                        <h4 className="font-semibold flex items-center gap-2"><ClipboardList className="h-5 w-5 text-muted-foreground"/>Observations</h4>
+                        <h4 className="font-semibold flex items-center gap-2"><ClipboardList className="h-5 w-5 text-muted-foreground"/>Observaciones</h4>
                         <p className="text-sm text-foreground/90 whitespace-pre-wrap">{visit.observations}</p>
                     </div>
                 </div>

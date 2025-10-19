@@ -20,24 +20,24 @@ export default async function ProjectOverviewPage({ params }: { params: { id: st
        <div className="lg:col-span-2 space-y-6">
         <Card>
           <CardHeader>
-            <CardTitle className="font-headline">Project Details</CardTitle>
-            <CardDescription>Key information about the project.</CardDescription>
+            <CardTitle className="font-headline">Detalles del Proyecto</CardTitle>
+            <CardDescription>Información clave sobre el proyecto.</CardDescription>
           </CardHeader>
           <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
               <div>
-                <p className="font-medium text-muted-foreground">Client</p>
+                <p className="font-medium text-muted-foreground">Cliente</p>
                 <p className="font-semibold text-base">{project.client}</p>
               </div>
               <div>
-                <p className="font-medium text-muted-foreground">Start Date</p>
+                <p className="font-medium text-muted-foreground">Fecha de Inicio</p>
                 <p className="font-semibold text-base">{project.startDate.toLocaleDateString()}</p>
               </div>
               <div>
-                <p className="font-medium text-muted-foreground">Project Type</p>
-                <p className="font-semibold text-base"><Badge variant="secondary" className="text-base">{project.projectType}</Badge></p>
+                <p className="font-medium text-muted-foreground">Tipo de Proyecto</p>
+                <span className="font-semibold text-base"><Badge variant="secondary" className="text-base">{project.projectType}</Badge></span>
               </div>
               <div className="md:col-span-2">
-                <p className="font-medium text-muted-foreground">Address</p>
+                <p className="font-medium text-muted-foreground">Dirección</p>
                 <p className="font-semibold text-base">{project.address}</p>
               </div>
           </CardContent>
@@ -47,16 +47,16 @@ export default async function ProjectOverviewPage({ params }: { params: { id: st
       <div className="space-y-6">
         <Card>
           <CardHeader>
-            <CardTitle className="font-headline">Progress Summary</CardTitle>
+            <CardTitle className="font-headline">Resumen de Progreso</CardTitle>
           </CardHeader>
           <CardContent>
             <div>
               <div className="flex justify-between mb-2">
-                <span className="text-base font-medium text-foreground">Tasks Completed</span>
-                <span className="text-sm font-medium text-foreground">{completedTasks} of {totalTasks}</span>
+                <span className="text-base font-medium text-foreground">Tareas Completadas</span>
+                <span className="text-sm font-medium text-foreground">{completedTasks} de {totalTasks}</span>
               </div>
               <Progress value={progress} className="h-3" />
-              <p className="text-right text-sm text-muted-foreground mt-1">{progress}% Complete</p>
+              <p className="text-right text-sm text-muted-foreground mt-1">{progress}% Completado</p>
             </div>
           </CardContent>
         </Card>

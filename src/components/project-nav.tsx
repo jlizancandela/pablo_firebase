@@ -12,10 +12,10 @@ export default function ProjectNav({ projectId }: ProjectNavProps) {
   const pathname = usePathname();
 
   const navItems = [
-    { name: "Overview", href: `/projects/${projectId}` },
-    { name: "Tasks", href: `/projects/${projectId}/tasks` },
-    { name: "Photos", href: `/projects/${projectId}/photos` },
-    { name: "Visits", href: `/projects/${projectId}/visits` },
+    { name: "Resumen", href: `/projects/${projectId}` },
+    { name: "Tareas", href: `/projects/${projectId}/tasks` },
+    { name: "Fotos", href: `/projects/${projectId}/photos` },
+    { name: "Visitas", href: `/projects/${projectId}/visits` },
   ];
 
   return (

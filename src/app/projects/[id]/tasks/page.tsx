@@ -35,7 +35,7 @@ export default function ProjectTasksPage({ params }: { params: { id: string } })
   }, [params.id]);
 
   if (!project) {
-    return <div>Loading...</div>;
+    return <div>Cargando...</div>;
   }
 
   const handleTaskCheck = (taskId: string, checked: boolean) => {
@@ -46,19 +46,19 @@ export default function ProjectTasksPage({ params }: { params: { id: string } })
     );
   };
   
-  const priorityBadgeVariant = (priority: 'High' | 'Medium' | 'Low'): 'destructive' | 'secondary' | 'outline' => {
-    if (priority === 'High') return 'destructive';
-    if (priority === 'Medium') return 'secondary';
+  const priorityBadgeVariant = (priority: 'Alta' | 'Media' | 'Baja'): 'destructive' | 'secondary' | 'outline' => {
+    if (priority === 'Alta') return 'destructive';
+    if (priority === 'Media') return 'secondary';
     return 'outline';
   }
 
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle className="font-headline">Task List</CardTitle>
+        <CardTitle className="font-headline">Lista de Tareas</CardTitle>
         <Button>
           <PlusCircle className="mr-2 h-4 w-4" />
-          New Task
+          Nueva Tarea
         </Button>
       </CardHeader>
       <CardContent>
@@ -67,9 +67,9 @@ export default function ProjectTasksPage({ params }: { params: { id: string } })
             <TableHeader>
               <TableRow>
                 <TableHead className="w-[50px]"></TableHead>
-                <TableHead>Description</TableHead>
-                <TableHead>Assignee</TableHead>
-                <TableHead className="text-center">Priority</TableHead>
+                <TableHead>Descripción</TableHead>
+                <TableHead>Asignado a</TableHead>
+                <TableHead className="text-center">Prioridad</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -80,7 +80,7 @@ export default function ProjectTasksPage({ params }: { params: { id: string } })
                       <Checkbox
                         checked={task.completed}
                         onCheckedChange={(checked) => handleTaskCheck(task.id, Boolean(checked))}
-                        aria-label={`Mark task ${task.description} as complete`}
+                        aria-label={`Marcar tarea ${task.description} como completada`}
                       />
                     </div>
                   </TableCell>

@@ -30,14 +30,14 @@ export default function ProjectCard({ project }: ProjectCardProps) {
           <p className="text-sm text-muted-foreground flex items-center gap-2 mt-2">
             <MapPin className="h-4 w-4 shrink-0" /> {project.address}
           </p>
-          <p className="text-sm text-muted-foreground mt-1">Client: {project.client}</p>
+          <p className="text-sm text-muted-foreground mt-1">Cliente: {project.client}</p>
         </CardContent>
         <CardFooter className="flex justify-between items-center text-sm text-muted-foreground">
            <div className="flex items-center gap-2">
              <CalendarDays className="h-4 w-4" />
              <span>{project.startDate.toLocaleDateString()}</span>
            </div>
-          <Badge variant={project.projectType === 'Commercial' ? 'default' : project.projectType === 'Residential' ? 'secondary' : 'outline'}>{project.projectType}</Badge>
+          <Badge variant={project.projectType === 'Comercial' ? 'default' : project.projectType === 'Residencial' ? 'secondary' : 'outline'}>{project.projectType}</Badge>
         </CardFooter>
       </Card>
     </Link>
