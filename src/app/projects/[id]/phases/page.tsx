@@ -5,11 +5,14 @@ import { useProject } from "../layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Badge } from "@/components/ui/badge";
-import { CheckCircle2, Circle, Radio } from "lucide-react";
+import { CheckCircle2, Circle, Radio, Upload } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Phase } from "@/lib/data";
 import { useFirebase } from "@/firebase";
 import { doc, updateDoc } from "firebase/firestore";
+import { Button } from "@/components/ui/button";
+import { ChangeEvent, useRef } from "react";
+import { useFileUpload } from "@/hooks/use-file-upload";
 
 const statusBadgeVariant = (status: 'No iniciada' | 'En curso' | 'Completada'): 'outline' | 'secondary' | 'default' => {
   if (status === 'No iniciada') return 'outline';
@@ -49,6 +52,24 @@ export default function ProjectPhasesPage() {
     }
   };
 
+  const handlePhaseClick = async (phaseId: string) => {
+    if (!user) return;
+    
+    const newPhases: Phase[] = JSON.parse(JSON.stringify(project.phases));
+    const phaseIndex = newPhases.findIndex(p => p.id === phaseId);
+    if (phaseIndex === -1) return;
+
+    if (newPhases[phaseIndex].status === 'No iniciada') {
+      newPhases[phaseIndex].status = 'En curso';
+      const projectRef = doc(firestore, 'users', user.uid, 'projects', project.id);
+      try {
+        await updateDoc(projectRef, { phases: newPhases });
+      } catch (error) {
+        console.error("Error updating phase status:", error);
+      }
+    }
+  };
+
 
   return (
     <div className="space-y-6">
@@ -61,7 +82,10 @@ export default function ProjectPhasesPage() {
           <Accordion type="single" collapsible className="w-full" defaultValue="item-0">
             {project.phases.map((phase, index) => (
               <AccordionItem value={`item-${index}`} key={phase.id}>
-                <AccordionTrigger className="p-6 hover:no-underline">
+                <AccordionTrigger 
+                  className="p-6 hover:no-underline"
+                  onClick={() => handlePhaseClick(phase.id)}
+                >
                   <div className="flex items-center gap-4 w-full">
                     {statusIcon(phase.status)}
                     <div className="flex-1 text-left">
