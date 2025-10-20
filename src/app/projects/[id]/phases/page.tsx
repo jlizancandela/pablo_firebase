@@ -2,26 +2,23 @@
 'use client';
 
 import { useProject } from "../layout";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Badge } from "@/components/ui/badge";
-import { CheckCircle2, Circle, Radio, Upload } from "lucide-react";
+import { CheckCircle2, Circle, Radio } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Phase } from "@/lib/data";
+import { Phase, PhaseStatus, CheckpointStatus, Checkpoint } from "@/lib/data";
 import { useFirebase } from "@/firebase";
 import { doc, updateDoc } from "firebase/firestore";
-import { Button } from "@/components/ui/button";
-import { ChangeEvent, useRef } from "react";
-import { useFileUpload } from "@/hooks/use-file-upload";
 
-const statusBadgeVariant = (status: 'No iniciada' | 'En curso' | 'Completada'): 'outline' | 'secondary' | 'default' => {
-  if (status === 'No iniciada') return 'outline';
+const statusBadgeVariant = (status: PhaseStatus | CheckpointStatus): 'outline' | 'secondary' | 'default' => {
+  if (status === 'No iniciada' || status === 'No iniciado') return 'outline';
   if (status === 'En curso') return 'secondary';
   return 'default';
 };
 
-const statusIcon = (status: 'No iniciada' | 'En curso' | 'Completada') => {
-  if (status === 'No iniciada') return <Circle className="h-5 w-5 text-muted-foreground" />;
+const statusIcon = (status: PhaseStatus | CheckpointStatus) => {
+  if (status === 'No iniciada' || status === 'No iniciado') return <Circle className="h-5 w-5 text-muted-foreground" />;
   if (status === 'En curso') return <Radio className="h-5 w-5 text-yellow-500" />;
   return <CheckCircle2 className="h-5 w-5 text-green-500" />;
 }
@@ -48,7 +45,7 @@ export default function ProjectPhasesPage() {
     try {
       await updateDoc(projectRef, { phases: newPhases });
     } catch (error) {
-      console.error("Error updating phase:", error);
+      console.error("Error updating field:", error);
     }
   };
 
@@ -59,14 +56,55 @@ export default function ProjectPhasesPage() {
     const phaseIndex = newPhases.findIndex(p => p.id === phaseId);
     if (phaseIndex === -1) return;
 
-    if (newPhases[phaseIndex].status === 'No iniciada') {
-      newPhases[phaseIndex].status = 'En curso';
-      const projectRef = doc(firestore, 'users', user.uid, 'projects', project.id);
-      try {
-        await updateDoc(projectRef, { phases: newPhases });
-      } catch (error) {
-        console.error("Error updating phase status:", error);
-      }
+    const currentStatus = newPhases[phaseIndex].status;
+    let nextStatus: PhaseStatus;
+
+    if (currentStatus === 'No iniciada') {
+      nextStatus = 'En curso';
+    } else if (currentStatus === 'En curso') {
+      nextStatus = 'Completada';
+    } else { // 'Completada'
+      nextStatus = 'No iniciada';
+    }
+    
+    newPhases[phaseIndex].status = nextStatus;
+    
+    const projectRef = doc(firestore, 'users', user.uid, 'projects', project.id);
+    try {
+      await updateDoc(projectRef, { phases: newPhases });
+    } catch (error) {
+      console.error("Error updating phase status:", error);
+    }
+  };
+
+  const handleCheckpointClick = async (phaseId: string, checkpointId: string) => {
+    if (!user) return;
+
+    const newPhases: Phase[] = JSON.parse(JSON.stringify(project.phases));
+    const phaseIndex = newPhases.findIndex(p => p.id === phaseId);
+    if (phaseIndex === -1) return;
+
+    const checkpointIndex = newPhases[phaseIndex].checkpoints.findIndex(c => c.id === checkpointId);
+    if (checkpointIndex === -1) return;
+
+    const currentStatus = newPhases[phaseIndex].checkpoints[checkpointIndex].status;
+    let nextStatus: CheckpointStatus;
+
+    if (currentStatus === 'No iniciado') {
+      nextStatus = 'En curso';
+    } else if (currentStatus === 'En curso') {
+      nextStatus = 'Completado';
+    } else { // 'Completado'
+      nextStatus = 'No iniciado';
+    }
+
+    newPhases[phaseIndex].checkpoints[checkpointIndex].status = nextStatus;
+
+    const projectRef = doc(firestore, 'users', user.uid, 'projects', project.id);
+    try {
+      await updateDoc(projectRef, { phases: newPhases });
+    } catch (error) {
+      console.error("Error updating checkpoint status:", error);
     }
   };
 
@@ -84,9 +122,8 @@ export default function ProjectPhasesPage() {
               <AccordionItem value={`item-${index}`} key={phase.id}>
                 <AccordionTrigger 
                   className="p-6 hover:no-underline"
-                  onClick={() => handlePhaseClick(phase.id)}
                 >
-                  <div className="flex items-center gap-4 w-full">
+                  <div className="flex items-center gap-4 w-full" onClick={(e) => { e.stopPropagation(); handlePhaseClick(phase.id); }}>
                     {statusIcon(phase.status)}
                     <div className="flex-1 text-left">
                       <h3 className="font-semibold text-lg">{phase.title}</h3>
@@ -102,19 +139,19 @@ export default function ProjectPhasesPage() {
                     {phase.checkpoints.length > 0 ? (
                       phase.checkpoints.map(checkpoint => (
                         <Card key={checkpoint.id}>
-                          <CardHeader>
-                            <CardTitle className="text-base font-medium flex items-center justify-between">
-                              {checkpoint.title}
-                               <Badge variant={checkpoint.status === 'Completado' ? 'default' : 'outline'} className="text-xs">
+                          <div className="p-4 cursor-pointer" onClick={() => handleCheckpointClick(phase.id, checkpoint.id)}>
+                            <div className="flex items-center justify-between">
+                                <h4 className="text-base font-medium">{checkpoint.title}</h4>
+                               <Badge variant={statusBadgeVariant(checkpoint.status)} className="text-xs">
                                 {checkpoint.status}
                                </Badge>
-                            </CardTitle>
-                          </CardHeader>
-                          <CardContent className="space-y-3">
+                            </div>
+                          </div>
+                          <CardContent className="space-y-3 pt-0">
                             {checkpoint.fields.map(field => (
-                              <div key={field.id} className="flex items-center justify-between text-sm">
+                              <div key={field.id} className="flex items-center justify-between text-sm pl-2 border-l-2 ml-2">
                                 {field.type === 'checkbox' ? (
-                                    <label htmlFor={field.id} className="flex items-center gap-3 cursor-pointer">
+                                    <label htmlFor={field.id} className="flex items-center gap-3 cursor-pointer py-1">
                                       <Checkbox 
                                         id={field.id} 
                                         checked={!!field.value} 
