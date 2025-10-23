@@ -49,7 +49,8 @@ export default function ProjectPhasesPage() {
     }
   };
 
-  const handlePhaseClick = async (phaseId: string) => {
+  const handlePhaseClick = async (e: React.MouseEvent, phaseId: string) => {
+    e.stopPropagation();
     if (!user) return;
     
     const newPhases: Phase[] = JSON.parse(JSON.stringify(project.phases));
@@ -122,8 +123,9 @@ export default function ProjectPhasesPage() {
               <AccordionItem value={`item-${index}`} key={phase.id}>
                 <AccordionTrigger 
                   className="p-6 hover:no-underline"
+                  onClick={(e) => handlePhaseClick(e, phase.id)}
                 >
-                  <div className="flex items-center gap-4 w-full" onClick={(e) => { e.stopPropagation(); handlePhaseClick(phase.id); }}>
+                  <div className="flex items-center gap-4 w-full">
                     {statusIcon(phase.status)}
                     <div className="flex-1 text-left">
                       <h3 className="font-semibold text-lg">{phase.title}</h3>
