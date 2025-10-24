@@ -3,39 +3,7 @@
 
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
-import { FirebaseClientProvider } from '@/firebase/client-provider';
-import { useAuth, useFirebase } from '@/firebase';
-import { initiateAnonymousSignIn } from '@/firebase/non-blocking-login';
-import { useEffect, type ReactNode } from 'react';
-
-/**
- * Componente contenedor que gestiona la autenticación del usuario.
- * Muestra un estado de carga mientras verifica al usuario y, si no hay ninguno,
- * inicia un inicio de sesión anónimo.
- * @param {object} props - Propiedades del componente.
- * @param {ReactNode} props.children - Componentes hijos que se renderizarán una vez que el usuario esté autenticado.
- * @returns {JSX.Element} El contenido de la aplicación o una pantalla de carga.
- */
-function AuthWrapper({ children }: { children: ReactNode }) {
-  const { user, isUserLoading } = useFirebase();
-  const auth = useAuth();
-
-  useEffect(() => {
-    if (!isUserLoading && !user) {
-      initiateAnonymousSignIn(auth);
-    }
-  }, [isUserLoading, user, auth]);
-
-  if (isUserLoading) {
-    return (
-      <div className="flex items-center justify-center h-screen">
-        <p>Cargando...</p>
-      </div>
-    );
-  }
-
-  return <>{children}</>;
-}
+import { type ReactNode } from 'react';
 
 
 /**
@@ -73,11 +41,7 @@ export default function RootLayout({
         <link rel="apple-touch-icon" href="/icons/icon-192x192.png" />
       </head>
       <body className="font-body antialiased">
-        <FirebaseClientProvider>
-          <AuthWrapper>
-            {children}
-          </AuthWrapper>
-        </FirebaseClientProvider>
+        {children}
         <Toaster />
       </body>
     </html>

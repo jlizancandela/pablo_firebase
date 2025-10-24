@@ -14,6 +14,10 @@ import {
   DropdownMenuTrigger,
 } from "./ui/dropdown-menu";
 import { useEffect, useState } from "react";
+import { db } from "@/lib/db";
+import JSZip from "jszip";
+import { saveAs } from 'file-saver';
+import { useToast } from "@/hooks/use-toast";
 
 /**
  * Interfaz para el evento `beforeinstallprompt`.
@@ -38,6 +42,7 @@ interface BeforeInstallPromptEvent extends Event {
  */
 export default function Header() {
   const [installPrompt, setInstallPrompt] = useState<BeforeInstallPromptEvent | null>(null);
+  const { toast } = useToast();
 
   useEffect(() => {
     /**
@@ -80,6 +85,53 @@ export default function Header() {
     });
   };
 
+  const handleExportAll = async () => {
+    toast({ title: "Iniciando exportación", description: "Recopilando todos los datos..." });
+    try {
+      const zip = new JSZip();
+      const allProjects = await db.projects.toArray();
+      
+      const simplifiedProjects = [];
+
+      for (const project of allProjects) {
+        const projectFolder = zip.folder(`project_${project.id}`);
+        const photoFolder = projectFolder?.folder('photos');
+        
+        const photoPromises = project.photos.map(async (photo, index) => {
+          try {
+            const response = await fetch(photo.url);
+            const blob = await response.blob();
+            const extension = blob.type.split('/')[1] || 'jpg';
+            const filename = `photo_${photo.id}.${extension}`;
+            photoFolder?.file(filename, blob);
+            // Return a path relative to the zip for the JSON
+            return { ...photo, url: `photos/${filename}` };
+          } catch (e) {
+            console.error(`Failed to fetch photo ${photo.url}`, e);
+            return { ...photo, url: 'failed_to_download' }; // Keep original URL but mark as failed
+          }
+        });
+
+        const updatedPhotos = await Promise.all(photoPromises);
+        simplifiedProjects.push({ ...project, photos: updatedPhotos });
+      }
+
+      zip.file("data.json", JSON.stringify(simplifiedProjects, null, 2));
+
+      toast({ title: "Generando archivo...", description: "Comprimiendo datos. Esto puede tardar un momento." });
+
+      const zipBlob = await zip.generateAsync({ type: "blob" });
+      saveAs(zipBlob, `constructwise_backup_${new Date().toISOString().split('T')[0]}.zip`);
+
+      toast({ title: "¡Exportación completada!", description: "Tu copia de seguridad ha sido descargada." });
+
+    } catch (error) {
+      console.error("Export failed:", error);
+      toast({ variant: "destructive", title: "Error de exportación", description: "No se pudieron exportar los datos." });
+    }
+  };
+
+
   return (
     <header className="sticky top-0 z-40 w-full border-b bg-card">
       <div className="container flex h-16 items-center">
@@ -94,11 +146,11 @@ export default function Header() {
               Instalar App
             </Button>
           )}
-          <Button variant="ghost" size="sm" className="hidden sm:inline-flex">
+          <Button variant="ghost" size="sm" className="hidden sm:inline-flex" onClick={() => window.location.reload()}>
             <RefreshCw className="mr-2 h-4 w-4" />
-            Sincronizar Datos
+            Refrescar Datos
           </Button>
-          <Button variant="outline" size="sm" className="hidden sm:inline-flex">
+          <Button variant="outline" size="sm" className="hidden sm:inline-flex" onClick={handleExportAll}>
             <Download className="mr-2 h-4 w-4" />
             Exportar Todo
           </Button>
@@ -113,15 +165,14 @@ export default function Header() {
             <DropdownMenuContent className="w-56" align="end" forceMount>
               <DropdownMenuLabel className="font-normal">
                 <div className="flex flex-col space-y-1">
-                  <p className="text-sm font-medium leading-none">Usuario de ConstructWise</p>
+                  <p className="text-sm font-medium leading-none">Usuario Anónimo</p>
                   <p className="text-xs leading-none text-muted-foreground">
-                    usuario@example.com
+                    Modo Offline
                   </p>
                 </div>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuItem>Configuración</DropdownMenuItem>
-              <DropdownMenuItem>Cerrar Sesión</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>

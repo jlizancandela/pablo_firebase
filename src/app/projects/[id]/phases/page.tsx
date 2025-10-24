@@ -8,8 +8,8 @@ import { Badge } from "@/components/ui/badge";
 import { CheckCircle2, Circle, Radio } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Phase, PhaseStatus, CheckpointStatus, Checkpoint } from "@/lib/data";
-import { useFirebase } from "@/firebase";
-import { doc, updateDoc } from "firebase/firestore";
+import { db } from "@/lib/db";
+import { useToast } from "@/hooks/use-toast";
 
 /**
  * Determina la variante de estilo para un badge de estado.
@@ -40,7 +40,20 @@ const statusIcon = (status: PhaseStatus | CheckpointStatus) => {
  */
 export default function ProjectPhasesPage() {
   const project = useProject();
-  const { firestore, user } = useFirebase();
+  const { toast } = useToast();
+
+  const updatePhases = async (newPhases: Phase[]) => {
+    try {
+      await db.projects.update(project.id, { phases: newPhases });
+    } catch (error) {
+      console.error("Error updating phases:", error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "No se pudieron guardar los cambios en las fases.",
+      });
+    }
+  }
 
   /**
    * Maneja el cambio de valor de un campo de un checkpoint (ej. un checkbox).
@@ -50,8 +63,6 @@ export default function ProjectPhasesPage() {
    * @param {any} newValue - El nuevo valor para el campo.
    */
   const handleFieldChange = async (phaseId: string, checkpointId: string, fieldId: string, newValue: any) => {
-    if (!user) return;
-
     const newPhases: Phase[] = JSON.parse(JSON.stringify(project.phases));
     const phaseIndex = newPhases.findIndex(p => p.id === phaseId);
     if (phaseIndex === -1) return;
@@ -62,13 +73,7 @@ export default function ProjectPhasesPage() {
 
     newPhases[phaseIndex].checkpoints[checkpointIndex].fields[fieldIndex].value = newValue;
 
-    const projectRef = doc(firestore, 'users', user.uid, 'projects', project.id);
-
-    try {
-      await updateDoc(projectRef, { phases: newPhases });
-    } catch (error) {
-      console.error("Error updating field:", error);
-    }
+    await updatePhases(newPhases);
   };
 
   /**
@@ -78,7 +83,6 @@ export default function ProjectPhasesPage() {
    */
   const handlePhaseClick = async (e: React.MouseEvent, phaseId: string) => {
     e.stopPropagation();
-    if (!user) return;
     
     const newPhases: Phase[] = JSON.parse(JSON.stringify(project.phases));
     const phaseIndex = newPhases.findIndex(p => p.id === phaseId);
@@ -97,12 +101,7 @@ export default function ProjectPhasesPage() {
     
     newPhases[phaseIndex].status = nextStatus;
     
-    const projectRef = doc(firestore, 'users', user.uid, 'projects', project.id);
-    try {
-      await updateDoc(projectRef, { phases: newPhases });
-    } catch (error) {
-      console.error("Error updating phase status:", error);
-    }
+    await updatePhases(newPhases);
   };
 
   /**
@@ -111,8 +110,6 @@ export default function ProjectPhasesPage() {
    * @param {string} checkpointId - El ID del checkpoint que se está actualizando.
    */
   const handleCheckpointClick = async (phaseId: string, checkpointId: string) => {
-    if (!user) return;
-
     const newPhases: Phase[] = JSON.parse(JSON.stringify(project.phases));
     const phaseIndex = newPhases.findIndex(p => p.id === phaseId);
     if (phaseIndex === -1) return;
@@ -133,12 +130,7 @@ export default function ProjectPhasesPage() {
 
     newPhases[phaseIndex].checkpoints[checkpointIndex].status = nextStatus;
 
-    const projectRef = doc(firestore, 'users', user.uid, 'projects', project.id);
-    try {
-      await updateDoc(projectRef, { phases: newPhases });
-    } catch (error) {
-      console.error("Error updating checkpoint status:", error);
-    }
+    await updatePhases(newPhases);
   };
 
 

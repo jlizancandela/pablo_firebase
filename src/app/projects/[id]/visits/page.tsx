@@ -7,21 +7,14 @@ import { Button } from "@/components/ui/button";
 import { PlusCircle, CalendarDays, Users, ClipboardList, Edit } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Timestamp } from "firebase/firestore";
 
 /**
  * Formatea una fecha para mostrarla en un formato largo y legible.
- * @param {any} date - La fecha a formatear (puede ser Timestamp, Date o string).
+ * @param {Date} date - La fecha a formatear.
  * @returns {string} La fecha formateada, ej: "19 de octubre de 2025".
  */
-function formatDate(date: any): string {
+function formatDate(date: Date): string {
     if (!date) return '';
-    if (date instanceof Timestamp) {
-        return date.toDate().toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' });
-    }
-    if (date instanceof Date) {
-        return date.toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' });
-    }
     return new Date(date).toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' });
 }
 
@@ -32,11 +25,15 @@ function formatDate(date: any): string {
 export default function ProjectVisitsPage() {
   const project = useProject();
 
+  const handleActionClick = () => {
+    alert("La gestión de visitas se implementará en una futura versión.");
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-headline font-bold">Registro de Visitas</h2>
-        <Button variant="outline">
+        <Button variant="outline" onClick={handleActionClick}>
           <PlusCircle className="mr-2 h-4 w-4" />
           Registrar Nueva Visita
         </Button>
@@ -47,7 +44,7 @@ export default function ProjectVisitsPage() {
             <ClipboardList className="h-12 w-12 text-muted-foreground mb-4" />
             <h3 className="text-xl font-semibold">No Hay Visitas Registradas</h3>
             <p className="text-muted-foreground">Registra las visitas a obra para mantener un historial de actividades.</p>
-             <Button className="mt-4">
+             <Button className="mt-4" onClick={handleActionClick}>
               <PlusCircle className="mr-2 h-4 w-4" />
               Registrar Primera Visita
             </Button>
@@ -65,7 +62,7 @@ export default function ProjectVisitsPage() {
                     </CardTitle>
                     <CardDescription className="mt-1 ml-8">Fase: <Badge variant="secondary">{visit.phase}</Badge></CardDescription>
                   </div>
-                  <Button variant="ghost" size="icon">
+                  <Button variant="ghost" size="icon" onClick={handleActionClick}>
                     <Edit className="h-4 w-4" />
                     <span className="sr-only">Editar Visita</span>
                   </Button>

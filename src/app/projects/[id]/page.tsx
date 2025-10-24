@@ -5,22 +5,14 @@ import { useProject } from "./layout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { Timestamp } from "firebase/firestore";
 
 /**
  * Formatea una fecha para mostrarla en la interfaz.
- * Admite objetos Timestamp de Firestore, objetos Date de JS o cadenas de fecha.
- * @param {any} date - La fecha a formatear.
+ * @param {Date} date - La fecha a formatear.
  * @returns {string} La fecha formateada como una cadena legible.
  */
-function formatDate(date: any): string {
+function formatDate(date: Date): string {
     if (!date) return '';
-    if (date instanceof Timestamp) {
-        return date.toDate().toLocaleDateString();
-    }
-    if (date instanceof Date) {
-        return date.toLocaleDateString();
-    }
     return new Date(date).toLocaleDateString();
 }
 

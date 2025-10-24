@@ -4,13 +4,10 @@
 import Header from "@/components/header";
 import ProjectCard from "@/components/project-card";
 import { Button } from "@/components/ui/button";
-import { Project, getInitialPhases } from "@/lib/data";
+import { Project } from "@/lib/data";
 import { PlusCircle } from "lucide-react";
-import { useCollection, useFirebase, useMemoFirebase, addDocumentNonBlocking, deleteDocumentNonBlocking } from '@/firebase';
-import { collection, query, doc } from 'firebase/firestore';
 import { Card } from '@/components/ui/card';
 import { HardHat } from 'lucide-react';
-import { PlaceHolderImages } from "@/lib/placeholder-images";
 import { useState } from "react";
 import {
   Dialog,
@@ -43,6 +40,9 @@ import {
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
+import { db, ProjectWithId } from "@/lib/db";
+import { useLiveQuery } from "dexie-react-hooks";
+import { useToast } from "@/hooks/use-toast";
 
 const projectSchema = z.object({
   name: z.string().min(1, "El nombre es obligatorio."),
@@ -59,9 +59,9 @@ type ProjectFormData = z.infer<typeof projectSchema>;
  * @returns {JSX.Element} El componente de la página de inicio.
  */
 export default function Home() {
-  const { firestore, user } = useFirebase();
   const [open, setOpen] = useState(false);
-  const [projectToDelete, setProjectToDelete] = useState<Project | null>(null);
+  const [projectToDelete, setProjectToDelete] = useState<ProjectWithId | null>(null);
+  const { toast } = useToast();
 
   const {
     control,
@@ -78,46 +78,51 @@ export default function Home() {
     },
   });
 
-  const projectsQuery = useMemoFirebase(() => {
-    if (!user) return null;
-    return query(collection(firestore, 'users', user.uid, 'projects'));
-  }, [firestore, user]);
-
-  const { data: projects, isLoading } = useCollection<Project>(projectsQuery);
+  const projects = useLiveQuery(() => db.projects.toArray(), []);
 
   /**
    * Maneja el envío del formulario para crear un nuevo proyecto.
    * @param {ProjectFormData} data - Los datos del formulario del proyecto.
    */
-  const onSubmit = (data: ProjectFormData) => {
-    if (!user) return;
-    const projectCollection = collection(firestore, 'users', user.uid, 'projects');
-    
-    const newProject: Omit<Project, 'id'> = {
-      ...data,
-      startDate: new Date(),
-      coverPhotoUrl: PlaceHolderImages[Math.floor(Math.random() * 4)].imageUrl,
-      coverPhotoHint: PlaceHolderImages[Math.floor(Math.random() * 4)].imageHint,
-      tasks: [],
-      photos: [],
-      visits: [],
-      files: [],
-      phases: getInitialPhases(),
-    };
-    
-    addDocumentNonBlocking(projectCollection, newProject);
-    reset();
-    setOpen(false);
+  const onSubmit = async (data: ProjectFormData) => {
+    try {
+      await db.addProject(data);
+      toast({
+        title: "Proyecto creado",
+        description: `El proyecto "${data.name}" ha sido creado con éxito.`
+      });
+      reset();
+      setOpen(false);
+    } catch (error) {
+      console.error("Error creating project:", error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "No se pudo crear el proyecto."
+      });
+    }
   };
   
   /**
    * Maneja la eliminación de un proyecto después de la confirmación.
    */
-  const handleDeleteProject = () => {
-    if (!projectToDelete || !user) return;
-    const projectDocRef = doc(firestore, 'users', user.uid, 'projects', projectToDelete.id);
-    deleteDocumentNonBlocking(projectDocRef);
-    setProjectToDelete(null);
+  const handleDeleteProject = async () => {
+    if (!projectToDelete) return;
+    try {
+      await db.projects.delete(projectToDelete.id);
+      toast({
+        title: "Proyecto eliminado",
+        description: `El proyecto "${projectToDelete.name}" ha sido eliminado.`
+      });
+      setProjectToDelete(null);
+    } catch (error) {
+      console.error("Error deleting project:", error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "No se pudo eliminar el proyecto."
+      });
+    }
   };
 
   /**
@@ -195,16 +200,16 @@ export default function Home() {
           <h1 className="text-3xl font-headline font-bold tracking-tight">
             Panel de Proyectos
           </h1>
-          <CreateProjectButton />
+          {projects && projects.length > 0 && <CreateProjectButton />}
         </div>
 
-        {isLoading && (
+        {projects === undefined && (
           <div className="text-center py-20">
             <p>Cargando proyectos...</p>
           </div>
         )}
 
-        {!isLoading && projects && projects.length > 0 && (
+        {projects && projects.length > 0 && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {projects.map((project) => (
               <ProjectCard key={project.id} project={project} onDelete={() => setProjectToDelete(project)} />
@@ -212,7 +217,7 @@ export default function Home() {
           </div>
         )}
 
-        {!isLoading && (!projects || projects.length === 0) && (
+        {projects && projects.length === 0 && (
            <Card className="flex flex-col items-center justify-center py-20 border-dashed">
              <HardHat className="h-12 w-12 text-muted-foreground mb-4" />
              <h3 className="text-xl font-semibold">No hay proyectos todavía</h3>

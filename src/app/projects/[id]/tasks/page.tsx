@@ -40,8 +40,9 @@ import {
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { useFirebase } from "@/firebase";
-import { doc, updateDoc } from "firebase/firestore";
+import { db } from "@/lib/db";
+import { v4 as uuidv4 } from 'uuid';
+import { useToast } from "@/hooks/use-toast";
 
 const taskSchema = z.object({
   description: z.string().min(1, "La descripción es obligatoria."),
@@ -58,8 +59,8 @@ type TaskFormData = z.infer<typeof taskSchema>;
  */
 export default function ProjectTasksPage() {
   const project = useProject();
-  const { firestore, user } = useFirebase();
   const [open, setOpen] = useState(false);
+  const { toast } = useToast();
 
   const {
     control,
@@ -75,8 +76,6 @@ export default function ProjectTasksPage() {
     },
   });
 
-  const projectRef = doc(firestore, 'users', user!.uid, 'projects', project.id);
-
   /**
    * Maneja el cambio de estado de completado de una tarea.
    * @param {string} taskId - El ID de la tarea a actualizar.
@@ -87,9 +86,10 @@ export default function ProjectTasksPage() {
       task.id === taskId ? { ...task, completed: checked } : task
     );
     try {
-      await updateDoc(projectRef, { tasks: updatedTasks });
+      await db.projects.update(project.id, { tasks: updatedTasks });
     } catch (error) {
       console.error("Error updating task: ", error);
+      toast({ variant: "destructive", title: "Error", description: "No se pudo actualizar la tarea."});
     }
   };
   
@@ -106,7 +106,7 @@ export default function ProjectTasksPage() {
       .toUpperCase();
       
     const newTask: Task = {
-      id: `task_${Date.now()}`, // ID único simple
+      id: uuidv4(),
       description: data.description,
       assignee: { name: data.assigneeName, initials: initials },
       priority: data.priority,
@@ -114,13 +114,17 @@ export default function ProjectTasksPage() {
     };
 
     try {
-      await updateDoc(projectRef, {
-        tasks: [...project.tasks, newTask]
-      });
+        const currentProject = await db.projects.get(project.id);
+        if (currentProject) {
+            const updatedTasks = [...currentProject.tasks, newTask];
+            await db.projects.update(project.id, { tasks: updatedTasks });
+        }
       reset();
       setOpen(false);
+      toast({ title: "Tarea creada", description: "La nueva tarea ha sido añadida al proyecto."});
     } catch (error) {
       console.error("Error adding task: ", error);
+      toast({ variant: "destructive", title: "Error", description: "No se pudo añadir la tarea."});
     }
   };
 

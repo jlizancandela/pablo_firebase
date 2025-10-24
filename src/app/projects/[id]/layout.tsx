@@ -5,21 +5,13 @@ import { notFound, useParams } from "next/navigation";
 import Header from "@/components/header";
 import ProjectHeader from "@/components/project-header";
 import ProjectNav from "@/components/project-nav";
-import { useDoc, useFirebase, useMemoFirebase } from "@/firebase";
-import { doc } from "firebase/firestore";
 import { Project } from "@/lib/data";
 import { createContext, useContext, ReactNode } from "react";
+import { useLiveQuery } from "dexie-react-hooks";
+import { db, ProjectWithId } from "@/lib/db";
 
 // 1. Crear un contexto para los datos del proyecto
-/**
- * @typedef {import('@/lib/data').Project} Project
- */
-
-/**
- * Contexto de React para proporcionar los datos de un proyecto a sus componentes hijos.
- * @type {React.Context<Project | null>}
- */
-const ProjectContext = createContext<Project | null>(null);
+const ProjectContext = createContext<ProjectWithId | null>(null);
 
 /**
  * Hook personalizado para acceder a los datos del proyecto desde el contexto.
@@ -36,7 +28,7 @@ export const useProject = () => {
 
 // 2. Crear un componente proveedor
 /**
- * Proveedor que obtiene los datos de un proyecto desde Firestore y los
+ * Proveedor que obtiene los datos de un proyecto desde IndexedDB y los
  * pone a disposición de sus componentes hijos a través del `ProjectContext`.
  * @param {object} props - Propiedades del componente.
  * @param {ReactNode} props.children - Componentes hijos que tendrán acceso al contexto del proyecto.
@@ -45,19 +37,10 @@ export const useProject = () => {
 function ProjectProvider({ children }: { children: ReactNode }) {
   const params = useParams();
   const id = params.id as string;
-  const { firestore, user, isUserLoading } = useFirebase();
 
-  const projectRef = useMemoFirebase(() => {
-    // Solo construir la referencia si tanto el usuario como el ID están disponibles.
-    if (!user || !id) return null;
-    return doc(firestore, 'users', user.uid, 'projects', id);
-  }, [firestore, user, id]);
+  const project = useLiveQuery(() => db.projects.get(id), [id]);
 
-  const { data: project, isLoading: isProjectLoading } = useDoc<Project>(projectRef);
-
-  // CORRECCIÓN CRÍTICA: Debemos verificar tanto la carga del usuario como la del proyecto.
-  // Si alguno está cargando, mostramos el indicador de carga.
-  if (isUserLoading || isProjectLoading) {
+  if (project === undefined) {
     return (
       <div className="flex items-center justify-center h-screen">
         <p>Cargando proyecto...</p>
@@ -65,7 +48,6 @@ function ProjectProvider({ children }: { children: ReactNode }) {
     );
   }
 
-  // Solo después de que toda la carga esté completa, si no hay proyecto, entonces es un 404.
   if (!project) {
     return notFound();
   }

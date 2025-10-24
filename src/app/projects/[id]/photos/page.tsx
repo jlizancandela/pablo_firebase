@@ -5,16 +5,12 @@ import Image from "next/image";
 import { useProject } from "../layout";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Camera, PlusCircle, Trash2, Upload, Save } from "lucide-react";
-import { useFileUpload } from "@/hooks/use-file-upload";
+import { Camera, PlusCircle, Trash2, Save, Upload } from "lucide-react";
 import { useRef, useState, useEffect } from "react";
-import { useFirebase, addPhotoToProjectNonBlocking } from '@/firebase';
-import { doc, Timestamp, arrayRemove } from "firebase/firestore";
 import type { Photo } from "@/lib/data";
 import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
-import { PlaceHolderImages } from "@/lib/placeholder-images";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -25,7 +21,17 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { updateDocumentNonBlocking } from "@/firebase/non-blocking-updates";
+import { db } from "@/lib/db";
+import { v4 as uuidv4 } from "uuid";
+import { useLiveQuery } from "dexie-react-hooks";
+
+const fileToUrl = (file: File | Blob): Promise<string> => {
+    return new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result as string);
+        reader.readAsDataURL(file);
+    });
+};
 
 /**
  * Página que muestra la galería de fotos de un proyecto.
@@ -34,22 +40,16 @@ import { updateDocumentNonBlocking } from "@/firebase/non-blocking-updates";
  */
 export default function ProjectPhotosPage() {
   const project = useProject();
-  const { uploadFile, isUploading, uploadProgress } = useFileUpload();
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const { firestore, user } = useFirebase();
   const { toast } = useToast();
   const [photoComments, setPhotoComments] = useState<Record<string, string>>({});
   const [photoToDelete, setPhotoToDelete] = useState<Photo | null>(null);
-  const [randomImageIndex, setRandomImageIndex] = useState(4);
-
-  useEffect(() => {
-    // Generate random number only on the client side after hydration
-    setRandomImageIndex(Math.floor(Math.random() * 4) + 4);
-  }, []);
-
-  if (!user || !project) return null;
-
-  const projectRef = doc(firestore, 'users', user.uid, 'projects', project.id);
+  
+  // Create a live query for just the photos of the current project
+  const photos = useLiveQuery(async () => {
+    const proj = await db.projects.get(project.id);
+    return proj?.photos || [];
+  }, [project.id]);
 
   /**
    * Maneja la selección de un archivo para subirlo.
@@ -60,38 +60,38 @@ export default function ProjectPhotosPage() {
     if (!file) return;
 
     toast({
-      title: 'Subida iniciada',
-      description: `Subiendo ${file.name}...`,
+      title: 'Procesando foto',
+      description: `Añadiendo ${file.name}...`,
     });
 
     try {
-      // El hook se encarga de la subida directa a Storage
-      const downloadURL = await uploadFile(file);
-      
-      const randomGalleryImage = PlaceHolderImages.find(p => p.id.startsWith('project-gallery')) || PlaceHolderImages[randomImageIndex];
-      
-      const newPhoto: Photo = {
-        id: `photo_${Date.now()}`,
-        url: downloadURL,
-        hint: randomGalleryImage.imageHint,
-        comment: '',
-        capturedAt: Timestamp.now(),
-      };
+      const imageUrl = await fileToUrl(file);
 
-      // Usa la función no bloqueante para añadir la foto al array en Firestore
-      addPhotoToProjectNonBlocking(projectRef, newPhoto);
+      const newPhoto: Photo = {
+        id: uuidv4(),
+        url: imageUrl,
+        hint: 'local photo', // Hint for local images
+        comment: '',
+        capturedAt: new Date(),
+      };
+      
+      const currentProject = await db.projects.get(project.id);
+      if (currentProject) {
+        const updatedPhotos = [...currentProject.photos, newPhoto];
+        await db.projects.update(project.id, { photos: updatedPhotos });
+      }
 
       toast({
-        title: '¡Foto subida!',
-        description: 'La foto se ha añadido a tu proyecto y aparecerá en breve.',
+        title: '¡Foto añadida!',
+        description: 'La foto se ha guardado en la base de datos local.',
       });
     } catch (error) {
-      console.error("Error subiendo la foto: ", error);
-      const errorMessage = error instanceof Error ? error.message : 'No se pudo subir la foto.';
+      console.error("Error guardando la foto: ", error);
+      const errorMessage = error instanceof Error ? error.message : 'No se pudo guardar la foto.';
       toast({
         variant: "destructive",
-        title: 'Error de subida',
-        description: `No se pudo subir la foto. Razón: ${errorMessage}`,
+        title: 'Error',
+        description: `No se pudo guardar la foto. Razón: ${errorMessage}`,
       });
     }
   };
@@ -106,15 +106,16 @@ export default function ProjectPhotosPage() {
   };
 
   /**
-   * Guarda el comentario de una foto en Firestore.
+   * Guarda el comentario de una foto en la base de datos.
    * @param {string} photoId - El ID de la foto cuyo comentario se va a guardar.
    */
-  const handleSaveComment = (photoId: string) => {
+  const handleSaveComment = async (photoId: string) => {
     const updatedPhotos = project.photos.map(p => 
       p.id === photoId ? { ...p, comment: photoComments[photoId] ?? p.comment } : p
     );
 
-    updateDocumentNonBlocking(projectRef, { photos: updatedPhotos });
+    await db.projects.update(project.id, { photos: updatedPhotos });
+    
     toast({
       title: 'Comentario guardado',
       description: 'El comentario de la foto ha sido actualizado.',
@@ -124,13 +125,11 @@ export default function ProjectPhotosPage() {
   /**
    * Elimina una foto del proyecto.
    */
-  const handleDeletePhoto = () => {
-    if (!photoToDelete) return;
+  const handleDeletePhoto = async () => {
+    if (!photoToDelete || !photos) return;
     
-    // Use arrayRemove for atomic, non-blocking deletion from the array
-    updateDocumentNonBlocking(projectRef, {
-      photos: arrayRemove(photoToDelete)
-    });
+    const updatedPhotos = photos.filter(p => p.id !== photoToDelete.id);
+    await db.projects.update(project.id, { photos: updatedPhotos });
 
     toast({
       title: 'Foto eliminada',
@@ -153,21 +152,15 @@ export default function ProjectPhotosPage() {
         <Button 
           variant="outline"
           onClick={() => fileInputRef.current?.click()}
-          disabled={isUploading}
         >
-          {isUploading ? <Upload className="mr-2 h-4 w-4 animate-pulse" /> : <PlusCircle className="mr-2 h-4 w-4" />}
-          {isUploading ? 'Subiendo...' : 'Añadir Foto'}
+          <PlusCircle className="mr-2 h-4 w-4" />
+          Añadir Foto
         </Button>
       </div>
 
-      {isUploading && (
-        <div className="space-y-2">
-          <p className="text-sm font-medium">Subiendo foto... {Math.round(uploadProgress)}%</p>
-          <Progress value={uploadProgress} />
-        </div>
-      )}
-
-      {project.photos.length === 0 && !isUploading ? (
+      {photos === undefined ? (
+        <p>Cargando fotos...</p>
+      ) : photos.length === 0 ? (
         <Card className="flex flex-col items-center justify-center py-20 border-dashed">
           <Camera className="h-12 w-12 text-muted-foreground mb-4" />
           <h3 className="text-xl font-semibold">Aún no hay fotos</h3>
@@ -179,7 +172,7 @@ export default function ProjectPhotosPage() {
         </Card>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-          {project.photos.map((photo) => (
+          {photos.map((photo) => (
             <Card key={photo.id} className="group overflow-hidden flex flex-col">
               <CardContent className="p-0">
                 <div className="relative aspect-[4/3]">

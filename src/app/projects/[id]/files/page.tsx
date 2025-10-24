@@ -15,7 +15,6 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Timestamp } from "firebase/firestore";
 
 /**
  * Devuelve un icono basado en el tipo de archivo.
@@ -39,18 +38,11 @@ function getFileIcon(fileType: FileAttachment['fileType']) {
 
 /**
  * Formatea una fecha para mostrarla en la interfaz.
- * Admite objetos Timestamp de Firestore, objetos Date de JS o cadenas de fecha.
- * @param {any} date - La fecha a formatear.
+ * @param {Date} date - La fecha a formatear.
  * @returns {string} La fecha formateada como una cadena.
  */
-function formatDate(date: any): string {
+function formatDate(date: Date): string {
     if (!date) return '';
-    if (date instanceof Timestamp) {
-        return date.toDate().toLocaleDateString();
-    }
-    if (date instanceof Date) {
-        return date.toLocaleDateString();
-    }
     return new Date(date).toLocaleDateString();
 }
 
@@ -61,11 +53,20 @@ function formatDate(date: any): string {
 export default function ProjectFilesPage() {
   const project = useProject();
 
+  // TODO: Implement file upload to IndexedDB and deletion
+  const handleUploadClick = () => {
+    alert("La subida de archivos se implementará en una futura versión.");
+  };
+  
+  const handleDeleteClick = () => {
+    alert("La eliminación de archivos se implementará en una futura versión.");
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-headline font-bold">Archivos del Proyecto</h2>
-        <Button variant="outline">
+        <Button variant="outline" onClick={handleUploadClick}>
           <PlusCircle className="mr-2 h-4 w-4" />
           Subir Archivo
         </Button>
@@ -76,7 +77,7 @@ export default function ProjectFilesPage() {
           <FileArchive className="h-12 w-12 text-muted-foreground mb-4" />
           <h3 className="text-xl font-semibold">Aún no hay archivos</h3>
           <p className="text-muted-foreground">Sube documentos, planos y otros archivos del proyecto.</p>
-          <Button className="mt-4">
+          <Button className="mt-4" onClick={handleUploadClick}>
             <PlusCircle className="mr-2 h-4 w-4" />
             Subir Primer Archivo
           </Button>
@@ -108,12 +109,12 @@ export default function ProjectFilesPage() {
                     <TableCell>{formatDate(file.uploadedAt)}</TableCell>
                     <TableCell className="text-right">
                       <Button variant="ghost" size="icon" asChild>
-                        <a href={file.url} download>
+                        <a href={file.url} download={file.name}>
                           <Download className="h-4 w-4" />
                           <span className="sr-only">Descargar</span>
                         </a>
                       </Button>
-                      <Button variant="ghost" size="icon" className="text-destructive">
+                      <Button variant="ghost" size="icon" className="text-destructive" onClick={handleDeleteClick}>
                         <Trash2 className="h-4 w-4" />
                         <span className="sr-only">Eliminar</span>
                       </Button>
