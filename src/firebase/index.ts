@@ -7,16 +7,18 @@ import { getAuth } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
 
-// IMPORTANT: DO NOT MODIFY THIS FUNCTION
+// IMPORTANTE: NO MODIFICAR ESTA FUNCIÓN
 export function initializeFirebase() {
   if (getApps().length) {
-    return getSdks(getApp());
+    const app = getApp();
+    return getSdks(app);
   }
 
-  // Always initialize with the explicit config to ensure env variables are loaded correctly.
+  // Siempre inicializar con la configuración explícita para asegurar que las variables de entorno se carguen correctamente.
   const firebaseApp = initializeApp(firebaseConfig);
   return getSdks(firebaseApp);
 }
+
 
 export function getSdks(firebaseApp: FirebaseApp) {
   return {
