@@ -4,7 +4,7 @@
 import { useProject } from "../layout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { PlusCircle, CalendarDays, Users, ClipboardList, Edit } from "lucide-react";
+import { PlusCircle, CalendarDays, Users, ClipboardList, Edit, Calendar as CalendarIcon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import {
@@ -22,20 +22,27 @@ import { Textarea } from "@/components/ui/textarea";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { db } from "@/lib/db";
 import { v4 as uuidv4 } from 'uuid';
 import { useToast } from "@/hooks/use-toast";
 import type { Visit } from "@/lib/data";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { cn } from "@/lib/utils";
+import { format } from 'date-fns';
+import { es } from 'date-fns/locale';
 
 const visitSchema = z.object({
+  date: z.date({
+    required_error: "La fecha es obligatoria.",
+  }),
   phase: z.string().min(1, "La fase es obligatoria."),
   attendees: z.string().min(1, "Debe haber al menos un asistente."),
   observations: z.string().min(1, "Las observaciones son obligatorias."),
 });
 
 type VisitFormData = z.infer<typeof visitSchema>;
-
 
 /**
  * Formatea una fecha para mostrarla en un formato largo y legible.
@@ -54,43 +61,75 @@ function formatDate(date: Date): string {
 export default function ProjectVisitsPage() {
   const project = useProject();
   const [open, setOpen] = useState(false);
+  const [visitToEdit, setVisitToEdit] = useState<Visit | null>(null);
   const { toast } = useToast();
 
    const {
     control,
     handleSubmit,
     reset,
+    setValue,
     formState: { errors },
   } = useForm<VisitFormData>({
     resolver: zodResolver(visitSchema),
     defaultValues: {
+      date: new Date(),
       phase: "",
       attendees: "",
       observations: "",
     },
   });
+  
+   useEffect(() => {
+    if (visitToEdit) {
+      setValue("date", new Date(visitToEdit.date));
+      setValue("phase", visitToEdit.phase);
+      setValue("attendees", visitToEdit.attendees.join(', '));
+      setValue("observations", visitToEdit.observations);
+    } else {
+      reset({
+        date: new Date(),
+        phase: "",
+        attendees: "",
+        observations: "",
+      });
+    }
+  }, [visitToEdit, setValue, reset]);
+
+  const handleOpenDialog = (visit: Visit | null) => {
+    setVisitToEdit(visit);
+    setOpen(true);
+  };
 
   const onSubmit = async (data: VisitFormData) => {
-    const newVisit: Visit = {
-      id: uuidv4(),
-      date: new Date(),
-      phase: data.phase,
-      attendees: data.attendees.split(',').map(name => name.trim()).filter(name => name),
-      observations: data.observations,
-    };
-
     try {
         const currentProject = await db.projects.get(project.id);
-        if (currentProject) {
-            const updatedVisits = [...currentProject.visits, newVisit];
-            await db.projects.update(project.id, { visits: updatedVisits });
+        if (!currentProject) throw new Error("Project not found");
+
+        let updatedVisits: Visit[];
+        
+        if (visitToEdit) { // Editing existing visit
+            updatedVisits = currentProject.visits.map(v => 
+                v.id === visitToEdit.id ? { ...v, ...data, attendees: data.attendees.split(',').map(n => n.trim()) } : v
+            );
+            toast({ title: "Visita actualizada", description: "Los cambios en la visita han sido guardados." });
+        } else { // Creating new visit
+            const newVisit: Visit = {
+              id: uuidv4(),
+              ...data,
+              attendees: data.attendees.split(',').map(name => name.trim()).filter(name => name),
+            };
+            updatedVisits = [...currentProject.visits, newVisit];
+            toast({ title: "Visita registrada", description: "La nueva visita ha sido añadida al proyecto."});
         }
-      reset();
-      setOpen(false);
-      toast({ title: "Visita registrada", description: "La nueva visita ha sido añadida al proyecto."});
+      
+        await db.projects.update(project.id, { visits: updatedVisits });
+        reset();
+        setOpen(false);
+        setVisitToEdit(null);
     } catch (error) {
-      console.error("Error adding visit: ", error);
-      toast({ variant: "destructive", title: "Error", description: "No se pudo añadir la visita."});
+      console.error("Error saving visit: ", error);
+      toast({ variant: "destructive", title: "Error", description: "No se pudo guardar la visita."});
     }
   };
 
@@ -99,19 +138,53 @@ export default function ProjectVisitsPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-headline font-bold">Registro de Visitas</h2>
-        <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger asChild>
-            <Button>
-              <PlusCircle className="mr-2 h-4 w-4" />
-              Registrar Nueva Visita
-            </Button>
-          </DialogTrigger>
+        <Button onClick={() => handleOpenDialog(null)}>
+          <PlusCircle className="mr-2 h-4 w-4" />
+          Registrar Nueva Visita
+        </Button>
+      </div>
+
+       <Dialog open={open} onOpenChange={(isOpen) => { setOpen(isOpen); if (!isOpen) setVisitToEdit(null); }}>
           <DialogContent className="sm:max-w-[480px]">
             <DialogHeader>
-              <DialogTitle>Registrar nueva visita</DialogTitle>
+              <DialogTitle>{visitToEdit ? 'Editar Visita' : 'Registrar Nueva Visita'}</DialogTitle>
             </DialogHeader>
             <form onSubmit={handleSubmit(onSubmit)}>
               <div className="grid gap-4 py-4">
+
+                 <div className="space-y-2">
+                  <Label htmlFor="date">Fecha de la visita</Label>
+                  <Controller
+                    name="date"
+                    control={control}
+                    render={({ field }) => (
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button
+                            variant={"outline"}
+                            className={cn(
+                              "w-full justify-start text-left font-normal",
+                              !field.value && "text-muted-foreground"
+                            )}
+                          >
+                            <CalendarIcon className="mr-2 h-4 w-4" />
+                            {field.value ? format(field.value, "PPP", { locale: es }) : <span>Elige una fecha</span>}
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0">
+                          <Calendar
+                            mode="single"
+                            selected={field.value}
+                            onSelect={field.onChange}
+                            initialFocus
+                          />
+                        </PopoverContent>
+                      </Popover>
+                    )}
+                  />
+                  {errors.date && <p className="text-red-500 text-xs">{errors.date.message}</p>}
+                </div>
+
                 <div className="space-y-2">
                   <Label htmlFor="phase">Fase Actual</Label>
                   <Controller name="phase" control={control} render={({ field }) => <Input id="phase" {...field} placeholder="Ej: Estructura, Acabados..." />} />
@@ -144,21 +217,20 @@ export default function ProjectVisitsPage() {
             </form>
           </DialogContent>
         </Dialog>
-      </div>
 
       {project.visits.length === 0 ? (
           <Card className="flex flex-col items-center justify-center py-20 border-dashed">
             <ClipboardList className="h-12 w-12 text-muted-foreground mb-4" />
             <h3 className="text-xl font-semibold">No Hay Visitas Registradas</h3>
             <p className="text-muted-foreground">Registra las visitas a obra para mantener un historial de actividades.</p>
-             <Button className="mt-4" onClick={() => setOpen(true)}>
+             <Button className="mt-4" onClick={() => handleOpenDialog(null)}>
               <PlusCircle className="mr-2 h-4 w-4" />
               Registrar Primera Visita
             </Button>
           </Card>
         ) : (
         <div className="space-y-4">
-          {[...project.visits].sort((a, b) => b.date.getTime() - a.date.getTime()).map((visit) => (
+          {[...project.visits].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).map((visit) => (
             <Card key={visit.id}>
               <CardHeader>
                 <div className="flex justify-between items-start">
@@ -169,7 +241,7 @@ export default function ProjectVisitsPage() {
                     </CardTitle>
                     <CardDescription className="mt-1 ml-8">Fase: <Badge variant="secondary">{visit.phase}</Badge></CardDescription>
                   </div>
-                  <Button variant="ghost" size="icon" onClick={() => alert("La edición de visitas se implementará en una futura versión.")}>
+                  <Button variant="ghost" size="icon" onClick={() => handleOpenDialog(visit)}>
                     <Edit className="h-4 w-4" />
                     <span className="sr-only">Editar Visita</span>
                   </Button>

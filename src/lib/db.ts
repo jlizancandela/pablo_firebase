@@ -22,7 +22,7 @@ export class ConstructPabloDexie extends Dexie {
 
     // Method to add a new project
     async addProject(projectData: Omit<Project, 'id' | 'startDate' | 'coverPhotoUrl' | 'coverPhotoHint' | 'tasks' | 'photos' | 'visits' | 'phases'>) {
-        const randomImageIndex = Math.floor(Math.random() * 4);
+        const randomImageIndex = Math.floor(Math.random() * PlaceHolderImages.length);
         const newProject: ProjectWithId = {
             ...projectData,
             id: uuidv4(),
@@ -31,6 +31,7 @@ export class ConstructPabloDexie extends Dexie {
             coverPhotoHint: PlaceHolderImages[randomImageIndex].imageHint,
             tasks: [],
             photos: [],
+
             visits: [],
             phases: getInitialPhases(),
         };
