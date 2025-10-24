@@ -1,7 +1,7 @@
 
 'use client';
 
-import { Building2, Download, RefreshCw, HardHat, Upload } from "lucide-react";
+import { Building2, Download, RefreshCw, HardHat, Upload, ListChecks } from "lucide-react";
 import Link from "next/link";
 import { Button } from "./ui/button";
 import { Avatar, AvatarFallback } from "./ui/avatar";
@@ -135,12 +135,12 @@ export default function Header() {
         
         // Process photos: convert relative paths back to Blob URLs
         for (const project of projectsToImport) {
-            const photoFolder = zip.folder(`project_${project.id}/photos`);
-            if (photoFolder) {
+            const projectFolder = zip.folder(`project_${project.id}`);
+            if (projectFolder) {
                 const updatedPhotos = [];
                 for (const photo of project.photos) {
                     const relativePath = photo.url.startsWith('photos/') ? photo.url.substring(7) : photo.url;
-                    const photoFile = photoFolder.file(relativePath);
+                    const photoFile = projectFolder.file(relativePath);
                     if (photoFile) {
                         const blob = await photoFile.async('blob');
                         const blobUrl = URL.createObjectURL(blob);
@@ -153,6 +153,7 @@ export default function Header() {
             }
              // Ensure dates are converted back to Date objects
             project.startDate = new Date(project.startDate);
+            project.visits.forEach(v => v.date = new Date(v.date));
         }
 
         await db.projects.clear();
@@ -178,6 +179,12 @@ export default function Header() {
           <Building2 className="h-6 w-6 text-primary" />
           <span className="font-headline text-lg font-bold">ConstructPablo</span>
         </Link>
+        <nav className="flex items-center gap-4 text-sm font-medium">
+            <Link href="/tasks" className="flex items-center gap-2 text-muted-foreground transition-colors hover:text-foreground">
+                <ListChecks className="h-5 w-5" />
+                Tareas
+            </Link>
+        </nav>
         <div className="flex flex-1 items-center justify-end space-x-2">
           {installPrompt && (
             <Button variant="outline" size="sm" onClick={handleInstallClick}>
