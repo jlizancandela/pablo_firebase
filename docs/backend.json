@@ -157,6 +157,40 @@
         "attendees",
         "observations"
       ]
+    },
+     "WorkLog": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "WorkLog",
+      "type": "object",
+      "description": "Represents a single work log entry for tracking hours.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the work log entry."
+        },
+        "projectId": {
+          "type": "string",
+          "description": "Reference to the Project this work log is associated with."
+        },
+        "date": {
+          "type": "string",
+          "description": "Date the work was performed.",
+          "format": "date-time"
+        },
+        "startTime": {
+          "type": "string",
+          "description": "Start time of the work session (e.g., '09:00')."
+        },
+        "endTime": {
+          "type": "string",
+          "description": "End time of the work session (e.g., '17:30')."
+        },
+        "description": {
+          "type": "string",
+          "description": "A description of the work performed."
+        }
+      },
+      "required": ["id", "projectId", "date", "startTime", "endTime", "description"]
     }
   },
   "auth": {
@@ -255,6 +289,26 @@
             {
               "name": "visitId",
               "description": "The unique identifier of the visit."
+            }
+          ]
+        }
+      },
+        {
+        "path": "/users/{userId}/worklogs/{worklogId}",
+        "definition": {
+          "entityName": "WorkLog",
+          "schema": {
+            "$ref": "#/backend/entities/WorkLog"
+          },
+          "description": "Stores work log entries for a user, associated with a project. Enforces path-based ownership.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the user who owns the work log."
+            },
+            {
+              "name": "worklogId",
+              "description": "The unique identifier of the work log entry."
             }
           ]
         }

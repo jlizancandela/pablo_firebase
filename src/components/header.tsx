@@ -1,7 +1,7 @@
 
 'use client';
 
-import { Building2, Download, RefreshCw, HardHat, Upload, ListChecks } from "lucide-react";
+import { Building2, Download, RefreshCw, HardHat, Upload, ListChecks, Hourglass } from "lucide-react";
 import Link from "next/link";
 import { Button } from "./ui/button";
 import { Avatar, AvatarFallback } from "./ui/avatar";
@@ -77,6 +77,7 @@ export default function Header() {
     try {
       const zip = new JSZip();
       const allProjects = await db.projects.toArray();
+      const allWorkLogs = await db.workLogs.toArray();
       
       const simplifiedProjects = [];
 
@@ -102,7 +103,8 @@ export default function Header() {
         simplifiedProjects.push({ ...project, photos: updatedPhotos });
       }
 
-      zip.file("data.json", JSON.stringify(simplifiedProjects, null, 2));
+      zip.file("projects.json", JSON.stringify(simplifiedProjects, null, 2));
+      zip.file("worklogs.json", JSON.stringify(allWorkLogs, null, 2));
 
       toast({ title: "Generando archivo...", description: "Comprimiendo datos. Esto puede tardar un momento." });
 
@@ -125,47 +127,59 @@ export default function Header() {
 
     try {
         const zip = await JSZip.loadAsync(file);
-        const dataFile = zip.file('data.json');
-        if (!dataFile) {
-            throw new Error('El archivo data.json no se encontró en el ZIP.');
-        }
-
-        const content = await dataFile.async('string');
-        let projectsToImport: Project[] = JSON.parse(content);
         
-        // Process photos: convert relative paths back to Blob URLs
-        for (const project of projectsToImport) {
-            const projectFolder = zip.folder(`project_${project.id}`);
-            if (projectFolder) {
-                const updatedPhotos = [];
-                for (const photo of project.photos) {
-                    const relativePath = photo.url.startsWith('photos/') ? photo.url.substring(7) : photo.url;
-                    const photoFile = projectFolder.file(relativePath);
-                    if (photoFile) {
-                        const blob = await photoFile.async('blob');
-                        const blobUrl = URL.createObjectURL(blob);
-                        updatedPhotos.push({ ...photo, url: blobUrl });
-                    } else {
-                        updatedPhotos.push(photo); // Keep if not found
+        // Import Projects
+        const projectsDataFile = zip.file('projects.json');
+        if (projectsDataFile) {
+            const projectsContent = await projectsDataFile.async('string');
+            let projectsToImport: Project[] = JSON.parse(projectsContent);
+            
+            for (const project of projectsToImport) {
+                const projectFolder = zip.folder(`project_${project.id}`);
+                if (projectFolder) {
+                    const updatedPhotos = [];
+                    for (const photo of project.photos) {
+                        const relativePath = photo.url.startsWith('photos/') ? photo.url.substring(7) : photo.url;
+                        const photoFile = projectFolder.file(relativePath);
+                        if (photoFile) {
+                            const blob = await photoFile.async('blob');
+                            const blobUrl = URL.createObjectURL(blob);
+                            updatedPhotos.push({ ...photo, url: blobUrl });
+                        } else {
+                            updatedPhotos.push(photo);
+                        }
                     }
+                    project.photos = updatedPhotos;
                 }
-                project.photos = updatedPhotos;
+                project.startDate = new Date(project.startDate);
+                project.visits.forEach(v => v.date = new Date(v.date));
             }
-             // Ensure dates are converted back to Date objects
-            project.startDate = new Date(project.startDate);
-            project.visits.forEach(v => v.date = new Date(v.date));
+            await db.projects.clear();
+            await db.projects.bulkAdd(projectsToImport as any);
+        } else {
+            toast({ variant: "destructive", title: "Aviso", description: "El archivo projects.json no se encontró en el ZIP. No se importaron proyectos." });
+        }
+        
+        // Import WorkLogs
+        const worklogsDataFile = zip.file('worklogs.json');
+        if (worklogsDataFile) {
+            const worklogsContent = await worklogsDataFile.async('string');
+            let worklogsToImport = JSON.parse(worklogsContent);
+            worklogsToImport.forEach((log: any) => log.date = new Date(log.date));
+
+            await db.workLogs.clear();
+            await db.workLogs.bulkAdd(worklogsToImport);
+        } else {
+             toast({ variant: "destructive", title: "Aviso", description: "El archivo worklogs.json no se encontró en el ZIP. No se importaron registros de horas." });
         }
 
-        await db.projects.clear();
-        await db.projects.bulkAdd(projectsToImport as any);
 
-        toast({ title: "¡Importación completada!", description: "Tus proyectos han sido restaurados." });
+        toast({ title: "¡Importación completada!", description: "Tus datos han sido restaurados." });
     } catch (error) {
         console.error("Import failed:", error);
         const errorMessage = error instanceof Error ? error.message : "Error desconocido.";
         toast({ variant: "destructive", title: "Error de importación", description: `No se pudo importar: ${errorMessage}` });
     } finally {
-        // Reset file input
         if (importInputRef.current) {
             importInputRef.current.value = "";
         }
@@ -183,6 +197,10 @@ export default function Header() {
             <Link href="/tasks" className="flex items-center gap-2 text-muted-foreground transition-colors hover:text-foreground">
                 <ListChecks className="h-5 w-5" />
                 Tareas
+            </Link>
+             <Link href="/work-logs" className="flex items-center gap-2 text-muted-foreground transition-colors hover:text-foreground">
+                <Hourglass className="h-5 w-5" />
+                Registro de Horas
             </Link>
         </nav>
         <div className="flex flex-1 items-center justify-end space-x-2">

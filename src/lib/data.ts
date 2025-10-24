@@ -64,6 +64,15 @@ export interface Visit {
   observations: string;
 }
 
+export interface WorkLog {
+  id: string;
+  projectId: string;
+  date: Date;
+  startTime: string; // "HH:mm"
+  endTime: string;   // "HH:mm"
+  description: string;
+}
+
 export interface Project {
   id: string;
   name: string;
@@ -77,6 +86,10 @@ export interface Project {
   photos: Photo[];
   visits: Visit[];
   phases: Phase[];
+}
+
+export interface ProjectWithId extends Project {
+    id: string;
 }
 
 const createCheckpoint = (title: string): Checkpoint => ({
