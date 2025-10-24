@@ -22,10 +22,10 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
-        <meta name="application-name" content="ConstructWise" />
+        <meta name="application-name" content="ConstructPablo" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-        <meta name="apple-mobile-web-app-title" content="ConstructWise" />
+        <meta name="apple-mobile-web-app-title" content="ConstructPablo" />
         <meta name="format-detection" content="telephone=no" />
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="msapplication-config" content="/icons/browserconfig.xml" />
@@ -36,7 +36,7 @@ export default function RootLayout({
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet" />
-        <title>ConstructWise</title>
+        <title>ConstructPablo</title>
         <meta name="description" content="Gestiona tus proyectos de construcción con facilidad, online y offline." />
         <link rel="apple-touch-icon" href="/icons/icon-192x192.png" />
       </head>

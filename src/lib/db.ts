@@ -10,11 +10,11 @@ export interface ProjectWithId extends Project {
     id: string;
 }
 
-export class ConstructWiseDexie extends Dexie {
+export class ConstructPabloDexie extends Dexie {
     projects!: Table<ProjectWithId>;
 
     constructor() {
-        super('ConstructWiseDB');
+        super('ConstructPabloDB');
         this.version(1).stores({
             projects: '++id, name, client', // Define an auto-incrementing primary key 'id' and index other fields
         });
@@ -44,4 +44,4 @@ export class ConstructWiseDexie extends Dexie {
     }
 }
 
-export const db = new ConstructWiseDexie();
+export const db = new ConstructPabloDexie();

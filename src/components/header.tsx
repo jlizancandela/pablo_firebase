@@ -107,7 +107,7 @@ export default function Header() {
       toast({ title: "Generando archivo...", description: "Comprimiendo datos. Esto puede tardar un momento." });
 
       const zipBlob = await zip.generateAsync({ type: "blob" });
-      saveAs(zipBlob, `constructwise_backup_${new Date().toISOString().split('T')[0]}.zip`);
+      saveAs(zipBlob, `constructpablo_backup_${new Date().toISOString().split('T')[0]}.zip`);
 
       toast({ title: "¡Exportación completada!", description: "Tu copia de seguridad ha sido descargada." });
 
@@ -176,7 +176,7 @@ export default function Header() {
       <div className="container flex h-16 items-center">
         <Link href="/" className="flex items-center gap-2 mr-6">
           <Building2 className="h-6 w-6 text-primary" />
-          <span className="font-headline text-lg font-bold">ConstructWise</span>
+          <span className="font-headline text-lg font-bold">ConstructPablo</span>
         </Link>
         <div className="flex flex-1 items-center justify-end space-x-2">
           {installPrompt && (
@@ -209,7 +209,7 @@ export default function Header() {
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="relative h-9 w-9 rounded-full">
                 <Avatar className="h-9 w-9">
-                  <AvatarFallback>CW</AvatarFallback>
+                  <AvatarFallback>CP</AvatarFallback>
                 </Avatar>
               </Button>
             </DropdownMenuTrigger>

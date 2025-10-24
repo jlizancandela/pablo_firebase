@@ -1,6 +1,6 @@
 # Instrucciones de Configuración y Ejecución
 
-Este documento proporciona las instrucciones necesarias para configurar y ejecutar la aplicación ConstructWise, tanto en un entorno de desarrollo local como utilizando Docker.
+Este documento proporciona las instrucciones necesarias para configurar y ejecutar la aplicación ConstructPablo, tanto en un entorno de desarrollo local como utilizando Docker.
 
 ## 1. Prerrequisitos
 
@@ -65,13 +65,13 @@ El `Dockerfile` incluido está optimizado para producción. Utiliza un build mul
 1.  **Construye la imagen de Docker**:
     Desde la raíz del proyecto, ejecuta:
     ```sh
-    docker build -t constructwise-app .
+    docker build -t constructpablo-app .
     ```
 
 2.  **Ejecuta el contenedor**:
     Para iniciar un contenedor a partir de la imagen, debes pasarle las variables de entorno definidas en tu archivo `.env`.
     ```sh
-    docker run --rm -p 9002:3000 --env-file ./.env constructwise-app
+    docker run --rm -p 9002:3000 --env-file ./.env constructpablo-app
     ```
     - `-p 9002:3000`: Mapea el puerto `9002` de tu máquina al puerto `3000` del contenedor.
     - `--env-file ./.env`: Pasa todas las variables definidas en tu archivo `.env` al entorno del contenedor.
