@@ -1,5 +1,5 @@
 {
-  "name": "nextn",
+  "name": "constructpablo",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -7,7 +7,8 @@
     "build": "NODE_ENV=production next build",
     "start": "next start",
     "lint": "next lint",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "docker:push": "echo 'Por favor, edita este script en package.json y reemplaza TU_USUARIO_DOCKERHUB con tu nombre de usuario.' && docker build -t TU_USUARIO_DOCKERHUB/constructpablo-app:latest . && docker push TU_USUARIO_DOCKERHUB/constructpablo-app:latest"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",
