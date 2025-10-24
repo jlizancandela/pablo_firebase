@@ -32,7 +32,7 @@ export const useFileUpload = () => {
       setIsUploading(true);
       setUploadProgress(0);
 
-      const storageRef = ref(storage, `${path}/${file.name}`);
+      const storageRef = ref(storage, `${path}/${file.name}_${Date.now()}`);
       const uploadTask = uploadBytesResumable(storageRef, file);
 
       uploadTask.on(
@@ -53,8 +53,8 @@ export const useFileUpload = () => {
           reject(error);
         },
         () => {
-          // Subida completada con éxito
-          setUploadProgress(100); // Asegurar que la barra llega al 100%
+          // Subida completada con éxito. Aseguramos que la barra llegue al 100%.
+          setUploadProgress(100);
           getDownloadURL(uploadTask.snapshot.ref)
             .then((downloadURL) => {
               resolve({ downloadURL, metadata: uploadTask.snapshot.metadata });
@@ -69,7 +69,7 @@ export const useFileUpload = () => {
               reject(error);
             })
             .finally(() => {
-              // Reset state after a short delay to allow UI to update
+              // Resetear estado después de un breve retraso para que la UI se actualice.
               setTimeout(() => {
                 setIsUploading(false);
                 setUploadProgress(0);

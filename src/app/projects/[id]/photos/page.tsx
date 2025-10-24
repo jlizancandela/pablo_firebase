@@ -8,13 +8,23 @@ import { Button } from "@/components/ui/button";
 import { Camera, PlusCircle, Trash2, Upload, Save } from "lucide-react";
 import { useFileUpload } from "@/hooks/use-file-upload";
 import { useRef, useState } from "react";
-import { useFirebase, updateDocumentNonBlocking } from "@/firebase";
-import { doc, updateDoc, Timestamp } from "firebase/firestore";
+import { useFirebase, updateDocumentNonBlocking, deleteDocumentNonBlocking } from "@/firebase";
+import { doc, Timestamp } from "firebase/firestore";
 import type { Photo } from "@/lib/data";
 import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 
 /**
  * Página que muestra la galería de fotos de un proyecto.
@@ -28,6 +38,8 @@ export default function ProjectPhotosPage() {
   const { firestore, user } = useFirebase();
   const { toast } = useToast();
   const [photoComments, setPhotoComments] = useState<Record<string, string>>({});
+  const [photoToDelete, setPhotoToDelete] = useState<Photo | null>(null);
+
 
   if (!user || !project) return null;
 
@@ -41,6 +53,11 @@ export default function ProjectPhotosPage() {
     const file = event.target.files?.[0];
     if (!file) return;
 
+    toast({
+      title: 'Subida iniciada',
+      description: `Subiendo ${file.name}...`,
+    });
+
     uploadFile(file, `projects/${project.id}/photos`)
       .then(({ downloadURL }) => {
         const randomGalleryImage = PlaceHolderImages.find(p => p.id.startsWith('project-gallery')) || PlaceHolderImages[4];
@@ -53,14 +70,16 @@ export default function ProjectPhotosPage() {
           capturedAt: Timestamp.now(),
         };
 
+        const updatedPhotos = [...project.photos, newPhoto];
+
         // Usa la actualización no bloqueante para una experiencia offline-first
         updateDocumentNonBlocking(projectRef, {
-          photos: [...project.photos, newPhoto]
+          photos: updatedPhotos
         });
 
         toast({
-          title: 'Foto en proceso',
-          description: 'La foto se está subiendo y aparecerá en breve.',
+          title: '¡Foto subida!',
+          description: 'La foto se ha añadido a tu proyecto.',
         });
       })
       .catch((error) => {
@@ -86,47 +105,30 @@ export default function ProjectPhotosPage() {
    * Guarda el comentario de una foto en Firestore.
    * @param {string} photoId - El ID de la foto cuyo comentario se va a guardar.
    */
-  const handleSaveComment = async (photoId: string) => {
+  const handleSaveComment = (photoId: string) => {
     const updatedPhotos = project.photos.map(p => 
       p.id === photoId ? { ...p, comment: photoComments[photoId] ?? p.comment } : p
     );
 
-    try {
-      await updateDoc(projectRef, { photos: updatedPhotos });
-      toast({
-        title: 'Comentario guardado',
-        description: 'El comentario de la foto ha sido actualizado.',
-      });
-    } catch (error) {
-      console.error("Error guardando comentario:", error);
-      toast({
-        variant: 'destructive',
-        title: 'Error',
-        description: 'No se pudo guardar el comentario.',
-      });
-    }
+    updateDocumentNonBlocking(projectRef, { photos: updatedPhotos });
+    toast({
+      title: 'Comentario guardado',
+      description: 'El comentario de la foto ha sido actualizado.',
+    });
   };
 
   /**
    * Elimina una foto del proyecto.
-   * @param {string} photoId - El ID de la foto a eliminar.
    */
-  const handleDeletePhoto = async (photoId: string) => {
-    const updatedPhotos = project.photos.filter(p => p.id !== photoId);
-    try {
-      await updateDoc(projectRef, { photos: updatedPhotos });
-      toast({
-        title: 'Foto eliminada',
-        description: 'La foto ha sido eliminada del proyecto.',
-      });
-    } catch (error) {
-       console.error("Error eliminando foto:", error);
-      toast({
-        variant: 'destructive',
-        title: 'Error',
-        description: 'No se pudo eliminar la foto.',
-      });
-    }
+  const handleDeletePhoto = () => {
+    if (!photoToDelete) return;
+    const updatedPhotos = project.photos.filter(p => p.id !== photoToDelete.id);
+    deleteDocumentNonBlocking(doc(firestore, 'users', user.uid, 'projects', project.id), { photos: updatedPhotos });
+    toast({
+      title: 'Foto eliminada',
+      description: 'La foto ha sido eliminada del proyecto.',
+    });
+    setPhotoToDelete(null);
   };
 
   return (
@@ -152,7 +154,7 @@ export default function ProjectPhotosPage() {
 
       {isUploading && (
         <div className="space-y-2">
-          <p className="text-sm font-medium">Subiendo foto...</p>
+          <p className="text-sm font-medium">Subiendo foto... {Math.round(uploadProgress)}%</p>
           <Progress value={uploadProgress} />
         </div>
       )}
@@ -181,7 +183,7 @@ export default function ProjectPhotosPage() {
                     data-ai-hint={photo.hint}
                   />
                   <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <Button variant="destructive" size="icon" className="h-8 w-8" onClick={() => handleDeletePhoto(photo.id)}>
+                    <Button variant="destructive" size="icon" className="h-8 w-8" onClick={() => setPhotoToDelete(photo)}>
                       <Trash2 className="h-4 w-4" />
                       <span className="sr-only">Eliminar foto</span>
                     </Button>
@@ -195,7 +197,7 @@ export default function ProjectPhotosPage() {
                   onChange={(e) => handleCommentChange(photo.id, e.target.value)}
                   className="text-sm h-16"
                 />
-                {(photoComments[photo.id] !== undefined && photoComments[photo.id] !== photo.comment) && (
+                {(photoComments[photo.id] !== undefined && photoComments[photo.id] !== (photo.comment ?? '')) && (
                   <Button size="sm" className="w-full" onClick={() => handleSaveComment(photo.id)}>
                     <Save className="mr-2 h-4 w-4"/> Guardar comentario
                   </Button>
@@ -205,6 +207,22 @@ export default function ProjectPhotosPage() {
           ))}
         </div>
       )}
+
+      <AlertDialog open={!!photoToDelete} onOpenChange={(open) => !open && setPhotoToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta acción es permanente y no se puede deshacer. Se eliminará la foto seleccionada.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setPhotoToDelete(null)}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeletePhoto}>Eliminar</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
     </div>
   );
 }

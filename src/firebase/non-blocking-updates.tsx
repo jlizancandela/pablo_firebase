@@ -1,3 +1,4 @@
+
 'use client';
     
 import {
@@ -8,6 +9,8 @@ import {
   CollectionReference,
   DocumentReference,
   SetOptions,
+  DocumentData,
+  WithFieldValue,
 } from 'firebase/firestore';
 import { errorEmitter } from '@/firebase/error-emitter';
 import {FirestorePermissionError} from '@/firebase/errors';
@@ -56,7 +59,7 @@ export function addDocumentNonBlocking(colRef: CollectionReference, data: any) {
  * Initiates an updateDoc operation for a document reference.
  * Does NOT await the write operation internally.
  */
-export function updateDocumentNonBlocking(docRef: DocumentReference, data: any) {
+export function updateDocumentNonBlocking(docRef: DocumentReference, data: WithFieldValue<DocumentData>) {
   updateDoc(docRef, data)
     .catch(error => {
       errorEmitter.emit(
@@ -75,15 +78,29 @@ export function updateDocumentNonBlocking(docRef: DocumentReference, data: any) 
  * Initiates a deleteDoc operation for a document reference.
  * Does NOT await the write operation internally.
  */
-export function deleteDocumentNonBlocking(docRef: DocumentReference) {
-  deleteDoc(docRef)
+export function deleteDocumentNonBlocking(docRef: DocumentReference, data?: WithFieldValue<DocumentData>) {
+  // If data is provided, it's an update to remove an element, otherwise it's a full document delete.
+  if (data) {
+     updateDoc(docRef, data)
     .catch(error => {
       errorEmitter.emit(
         'permission-error',
         new FirestorePermissionError({
           path: docRef.path,
-          operation: 'delete',
+          operation: 'update', // This is technically an update to remove data
         })
       )
     });
+  } else {
+    deleteDoc(docRef)
+      .catch(error => {
+        errorEmitter.emit(
+          'permission-error',
+          new FirestorePermissionError({
+            path: docRef.path,
+            operation: 'delete',
+          })
+        )
+      });
+  }
 }
