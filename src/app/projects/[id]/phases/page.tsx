@@ -5,11 +5,14 @@ import { useProject } from "../layout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Badge } from "@/components/ui/badge";
-import { CheckCircle2, Circle, Radio } from "lucide-react";
+import { CheckCircle2, Circle, Radio, Save } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Phase, PhaseStatus, CheckpointStatus, Checkpoint } from "@/lib/data";
 import { db } from "@/lib/db";
 import { useToast } from "@/hooks/use-toast";
+import { useState } from "react";
+import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/ui/button";
 
 /**
  * Determina la variante de estilo para un badge de estado.
@@ -41,6 +44,7 @@ const statusIcon = (status: PhaseStatus | CheckpointStatus) => {
 export default function ProjectPhasesPage() {
   const project = useProject();
   const { toast } = useToast();
+  const [checkpointNotes, setCheckpointNotes] = useState<Record<string, string>>({});
 
   const updatePhases = async (newPhases: Phase[]) => {
     try {
@@ -74,6 +78,37 @@ export default function ProjectPhasesPage() {
     newPhases[phaseIndex].checkpoints[checkpointIndex].fields[fieldIndex].value = newValue;
 
     await updatePhases(newPhases);
+  };
+  
+  /**
+   * Maneja el cambio en el campo de notas de un checkpoint.
+   * @param {string} checkpointId - El ID del checkpoint que se está comentando.
+   * @param {string} text - El texto de las notas.
+   */
+  const handleNotesChange = (checkpointId: string, text: string) => {
+    setCheckpointNotes(prev => ({ ...prev, [checkpointId]: text }));
+  };
+
+  /**
+   * Guarda las notas de un checkpoint en la base de datos.
+   * @param {string} phaseId - El ID de la fase a la que pertenece el checkpoint.
+   * @param {string} checkpointId - El ID del checkpoint cuyas notas se van a guardar.
+   */
+  const handleSaveNotes = async (phaseId: string, checkpointId: string) => {
+    const newPhases: Phase[] = JSON.parse(JSON.stringify(project.phases));
+    const phaseIndex = newPhases.findIndex(p => p.id === phaseId);
+    if (phaseIndex === -1) return;
+    const checkpointIndex = newPhases[phaseIndex].checkpoints.findIndex(c => c.id === checkpointId);
+    if (checkpointIndex === -1) return;
+
+    newPhases[phaseIndex].checkpoints[checkpointIndex].notes = checkpointNotes[checkpointId] ?? newPhases[phaseIndex].checkpoints[checkpointIndex].notes;
+    
+    await updatePhases(newPhases);
+
+    toast({
+      title: 'Notas guardadas',
+      description: 'Tus apuntes han sido guardados.',
+    });
   };
 
   /**
@@ -174,22 +209,40 @@ export default function ProjectPhasesPage() {
                             </div>
                           </div>
                           <CardContent className="space-y-3 pt-0">
-                            {checkpoint.fields.map(field => (
-                              <div key={field.id} className="flex items-center justify-between text-sm pl-2 border-l-2 ml-2">
-                                {field.type === 'checkbox' ? (
-                                    <label htmlFor={field.id} className="flex items-center gap-3 cursor-pointer py-1">
-                                      <Checkbox 
-                                        id={field.id} 
-                                        checked={!!field.value} 
-                                        onCheckedChange={(checked) => handleFieldChange(phase.id, checkpoint.id, field.id, checked)}
-                                      />
-                                      {field.label}
-                                    </label>
-                                ) : (
-                                  <span>{field.label}: {String(field.value)}</span>
+                            {checkpoint.fields.length > 0 && (
+                                <div className="space-y-3">
+                                {checkpoint.fields.map(field => (
+                                <div key={field.id} className="flex items-center justify-between text-sm pl-2 border-l-2 ml-2">
+                                    {field.type === 'checkbox' ? (
+                                        <label htmlFor={field.id} className="flex items-center gap-3 cursor-pointer py-1">
+                                        <Checkbox 
+                                            id={field.id} 
+                                            checked={!!field.value} 
+                                            onCheckedChange={(checked) => handleFieldChange(phase.id, checkpoint.id, field.id, checked)}
+                                        />
+                                        {field.label}
+                                        </label>
+                                    ) : (
+                                    <span>{field.label}: {String(field.value)}</span>
+                                    )}
+                                </div>
+                                ))}
+                                </div>
+                            )}
+
+                            <div className="space-y-2 pt-2">
+                                <Textarea
+                                placeholder="Añade tus apuntes aquí..."
+                                value={checkpointNotes[checkpoint.id] ?? checkpoint.notes ?? ''}
+                                onChange={(e) => handleNotesChange(checkpoint.id, e.target.value)}
+                                className="text-sm"
+                                />
+                                {(checkpointNotes[checkpoint.id] !== undefined && checkpointNotes[checkpoint.id] !== (checkpoint.notes ?? '')) && (
+                                <Button size="sm" className="w-full" onClick={() => handleSaveNotes(phase.id, checkpoint.id)}>
+                                    <Save className="mr-2 h-4 w-4"/> Guardar Apuntes
+                                </Button>
                                 )}
-                              </div>
-                            ))}
+                            </div>
                           </CardContent>
                         </Card>
                       ))
