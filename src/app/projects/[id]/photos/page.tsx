@@ -29,7 +29,9 @@ export default function ProjectPhotosPage() {
   const { toast } = useToast();
   const [photoComments, setPhotoComments] = useState<Record<string, string>>({});
 
-  const projectRef = doc(firestore, 'users', user!.uid, 'projects', project.id);
+  if (!user || !project) return null;
+
+  const projectRef = doc(firestore, 'users', user.uid, 'projects', project.id);
 
   /**
    * Maneja la selección de un archivo para subirlo.
@@ -37,7 +39,7 @@ export default function ProjectPhotosPage() {
    */
   const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (!file || !user) return;
+    if (!file) return;
 
     try {
       const { downloadURL } = await uploadFile(file, `projects/${project.id}/photos`);
@@ -51,6 +53,7 @@ export default function ProjectPhotosPage() {
         capturedAt: Timestamp.now(),
       };
 
+      // Actualiza Firestore con la nueva foto
       await updateDoc(projectRef, {
         photos: [...project.photos, newPhoto]
       });
@@ -65,7 +68,7 @@ export default function ProjectPhotosPage() {
       toast({
         variant: "destructive",
         title: 'Error de subida',
-        description: 'No se pudo subir la foto.',
+        description: error instanceof Error ? error.message : 'No se pudo subir la foto.',
       });
     }
   };

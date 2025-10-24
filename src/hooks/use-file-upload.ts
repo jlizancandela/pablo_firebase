@@ -54,13 +54,9 @@ export const useFileUpload = () => {
         },
         () => {
           // Subida completada con éxito
+          setUploadProgress(100); // Asegurar que la barra llega al 100%
           getDownloadURL(uploadTask.snapshot.ref)
             .then((downloadURL) => {
-              setUploadProgress(100); // Asegurar que la barra llega al 100%
-              toast({
-                title: 'Archivo subido',
-                description: `El archivo ${file.name} se ha subido correctamente.`,
-              });
               resolve({ downloadURL, metadata: uploadTask.snapshot.metadata });
             })
             .catch((error) => {
@@ -73,7 +69,11 @@ export const useFileUpload = () => {
               reject(error);
             })
             .finally(() => {
-              setIsUploading(false);
+              // Reset state after a short delay to allow UI to update
+              setTimeout(() => {
+                setIsUploading(false);
+                setUploadProgress(0);
+              }, 500);
             });
         }
       );
