@@ -49,7 +49,7 @@ export interface Photo {
   id: string;
   url: string;
   hint: string;
-  comment: string;
+  comment: string | null;
   capturedAt: any; // Date or Firestore Timestamp
 }
 
