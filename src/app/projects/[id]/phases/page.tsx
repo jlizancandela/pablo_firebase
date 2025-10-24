@@ -113,35 +113,29 @@ export default function ProjectPhasesPage() {
   };
 
   /**
-   * Maneja el clic en una fase para ciclar su estado (No iniciada -> En curso -> Completada).
-   * @param {React.MouseEvent} e - El evento de clic del ratón.
-   * @param {string} phaseId - El ID de la fase que se está actualizando.
+   * Recalcula y actualiza el estado de una fase basándose en el estado de sus checkpoints.
+   * @param {Phase} phase - La fase a recalcular.
+   * @returns {PhaseStatus} El nuevo estado calculado para la fase.
    */
-  const handlePhaseClick = async (e: React.MouseEvent, phaseId: string) => {
-    e.stopPropagation();
-    
-    const newPhases: Phase[] = JSON.parse(JSON.stringify(project.phases));
-    const phaseIndex = newPhases.findIndex(p => p.id === phaseId);
-    if (phaseIndex === -1) return;
+  const recalculatePhaseStatus = (phase: Phase): PhaseStatus => {
+    const totalCheckpoints = phase.checkpoints.length;
+    if (totalCheckpoints === 0) return phase.status;
 
-    const currentStatus = newPhases[phaseIndex].status;
-    let nextStatus: PhaseStatus;
+    const completedCount = phase.checkpoints.filter(c => c.status === 'Completado').length;
+    const notStartedCount = phase.checkpoints.filter(c => c.status === 'No iniciado').length;
 
-    if (currentStatus === 'No iniciada') {
-      nextStatus = 'En curso';
-    } else if (currentStatus === 'En curso') {
-      nextStatus = 'Completada';
-    } else { // 'Completada'
-      nextStatus = 'No iniciada';
+    if (completedCount === totalCheckpoints) {
+      return 'Completada';
     }
-    
-    newPhases[phaseIndex].status = nextStatus;
-    
-    await updatePhases(newPhases);
+    if (notStartedCount === totalCheckpoints) {
+      return 'No iniciada';
+    }
+    return 'En curso';
   };
 
   /**
    * Maneja el clic en un checkpoint para ciclar su estado (No iniciado -> En curso -> Completado).
+   * También recalcula y actualiza el estado de la fase principal.
    * @param {string} phaseId - El ID de la fase a la que pertenece el checkpoint.
    * @param {string} checkpointId - El ID del checkpoint que se está actualizando.
    */
@@ -165,6 +159,9 @@ export default function ProjectPhasesPage() {
     }
 
     newPhases[phaseIndex].checkpoints[checkpointIndex].status = nextStatus;
+
+    // Recalcular el estado de la fase principal
+    newPhases[phaseIndex].status = recalculatePhaseStatus(newPhases[phaseIndex]);
 
     await updatePhases(newPhases);
   };
@@ -190,7 +187,7 @@ export default function ProjectPhasesPage() {
                   className="p-6 hover:no-underline"
                 >
                   <div className="flex items-start gap-4 w-full">
-                    <div className="mt-1 cursor-pointer" onClick={(e) => handlePhaseClick(e, phase.id)}>
+                    <div className="mt-1">
                       {statusIcon(phase.status)}
                     </div>
                     <div className="flex-1 text-left">
@@ -211,13 +208,14 @@ export default function ProjectPhasesPage() {
                     {phase.checkpoints.length > 0 ? (
                       phase.checkpoints.map(checkpoint => (
                         <Card key={checkpoint.id}>
-                          <div className="p-4 cursor-pointer" onClick={() => handleCheckpointClick(phase.id, checkpoint.id)}>
-                            <div className="flex items-center justify-between">
-                                <h4 className="text-base font-medium">{checkpoint.title}</h4>
-                               <Badge variant={statusBadgeVariant(checkpoint.status)} className="text-xs">
-                                {checkpoint.status}
-                               </Badge>
+                           <div className="flex items-center justify-between p-4 cursor-pointer" onClick={() => handleCheckpointClick(phase.id, checkpoint.id)}>
+                            <div className="flex items-center gap-3">
+                              {statusIcon(checkpoint.status)}
+                              <h4 className="text-base font-medium">{checkpoint.title}</h4>
                             </div>
+                            <Badge variant={statusBadgeVariant(checkpoint.status)} className="text-xs">
+                             {checkpoint.status}
+                            </Badge>
                           </div>
                           <CardContent className="space-y-3 pt-0">
                             {checkpoint.fields.length > 0 && (
