@@ -5,7 +5,6 @@ import { Card, CardContent, CardFooter, CardHeader } from './ui/card';
 import type { Project } from '@/lib/data';
 import { Badge } from './ui/badge';
 import { CalendarDays, MapPin, Trash2 } from 'lucide-react';
-import { Timestamp } from 'firebase/firestore';
 import { Button } from './ui/button';
 import React from 'react';
 
@@ -25,17 +24,15 @@ interface ProjectCardProps {
 
 /**
  * Formatea una fecha para mostrarla en la interfaz.
- * @param {any} date - La fecha a formatear (puede ser Timestamp de Firestore, Date de JS o string).
+ * @param {any} date - La fecha a formatear (puede ser Date de JS o string).
  * @returns {string} La fecha formateada como una cadena.
  */
 function formatDate(date: any): string {
     if (!date) return '';
-    if (date instanceof Timestamp) {
-        return date.toDate().toLocaleDateString();
-    }
     if (date instanceof Date) {
         return date.toLocaleDateString();
     }
+    // Fallback for date as string
     return new Date(date).toLocaleDateString();
 }
 
