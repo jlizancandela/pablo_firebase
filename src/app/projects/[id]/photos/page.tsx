@@ -65,7 +65,8 @@ export default function ProjectPhotosPage() {
     });
 
     try {
-      const { downloadURL } = await uploadFile(file);
+      // El hook se encarga de la subida directa a Storage
+      const downloadURL = await uploadFile(file);
       
       const randomGalleryImage = PlaceHolderImages.find(p => p.id.startsWith('project-gallery')) || PlaceHolderImages[randomImageIndex];
       
@@ -86,10 +87,11 @@ export default function ProjectPhotosPage() {
       });
     } catch (error) {
       console.error("Error subiendo la foto: ", error);
+      const errorMessage = error instanceof Error ? error.message : 'No se pudo subir la foto.';
       toast({
         variant: "destructive",
         title: 'Error de subida',
-        description: error instanceof Error ? error.message : 'No se pudo subir la foto.',
+        description: `No se pudo subir la foto. Razón: ${errorMessage}`,
       });
     }
   };
