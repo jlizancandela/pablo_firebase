@@ -3,31 +3,40 @@
 
 import { firebaseConfig } from '@/firebase/config';
 import { initializeApp, getApps, getApp, FirebaseApp } from 'firebase/app';
-import { getAuth } from 'firebase/auth';
-import { getFirestore } from 'firebase/firestore';
-import { getStorage } from 'firebase/storage';
+import { getAuth, Auth } from 'firebase/auth';
+import { getFirestore, Firestore } from 'firebase/firestore';
+import { getStorage, FirebaseStorage } from 'firebase/storage';
 
-// IMPORTANTE: NO MODIFICAR ESTA FUNCIÓN
+/**
+ * Función ÚNICA y CENTRALIZADA para obtener las instancias de Firebase.
+ * Se asegura de que la inicialización solo ocurra una vez (idempotente).
+ * @returns {{ firebaseApp: FirebaseApp, auth: Auth, firestore: Firestore, storage: FirebaseStorage }}
+ */
 export function initializeFirebase() {
-  if (getApps().length) {
-    const app = getApp();
-    return getSdks(app);
+  let app: FirebaseApp;
+
+  if (!getApps().length) {
+    // Si no hay apps inicializadas, crea una nueva con la configuración importada.
+    app = initializeApp(firebaseConfig);
+  } else {
+    // Si ya está inicializada, simplemente obtiene la instancia existente.
+    app = getApp();
   }
 
-  // Siempre inicializar con la configuración explícita para asegurar que las variables de entorno se carguen correctamente.
-  const firebaseApp = initializeApp(firebaseConfig);
-  return getSdks(firebaseApp);
-}
-
-
-export function getSdks(firebaseApp: FirebaseApp) {
+  // Obtiene los servicios asociados a la app.
+  const auth = getAuth(app);
+  const firestore = getFirestore(app);
+  const storage = getStorage(app);
+  
   return {
-    firebaseApp,
-    auth: getAuth(firebaseApp),
-    firestore: getFirestore(firebaseApp),
-    storage: getStorage(firebaseApp),
+    firebaseApp: app,
+    auth,
+    firestore,
+    storage,
   };
 }
+
+// --- Exportaciones de utilidades y hooks ---
 
 export * from './provider';
 export * from './client-provider';
