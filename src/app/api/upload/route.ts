@@ -40,7 +40,11 @@ export async function POST(req: NextRequest) {
 
     // 3. Procesar el archivo recibido.
     const { files } = await parseForm(req);
-    const file = files.file?.[0];
+    const fileField = files.file;
+    
+    // 'fileField' puede ser un array de archivos o un único archivo, lo normalizamos a un array
+    const fileArray = Array.isArray(fileField) ? fileField : fileField ? [fileField] : [];
+    const file = fileArray[0];
 
     if (!file) {
       return NextResponse.json({ error: 'No file uploaded.' }, { status: 400 });
