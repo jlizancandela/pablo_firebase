@@ -13,7 +13,7 @@ export function initializeFirebase() {
     return getSdks(getApp());
   }
 
-  // Always initialize with the explicit config to ensure env variables are loaded correctly in local dev.
+  // Always initialize with the explicit config to ensure env variables are loaded correctly.
   const firebaseApp = initializeApp(firebaseConfig);
   return getSdks(firebaseApp);
 }
