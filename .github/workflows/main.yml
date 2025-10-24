@@ -35,7 +35,6 @@ jobs:
         run: npm run typecheck
 
   build-and-push-docker:
-    # Este trabajo solo se ejecuta cuando se hace push a la rama 'main'
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     needs: build-and-test
     runs-on: ubuntu-latest
@@ -55,9 +54,7 @@ jobs:
         with:
           context: .
           push: true
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/constructpablo-app:latest
-          # Pasa las variables de entorno de Firebase como argumentos de construcción
-          # para que se incluyan en la imagen final.
+          tags: jlizancandela/constructpablo-app:latest
           build-args: |
             NEXT_PUBLIC_FIREBASE_PROJECT_ID=${{ vars.NEXT_PUBLIC_FIREBASE_PROJECT_ID }}
             NEXT_PUBLIC_FIREBASE_APP_ID=${{ vars.NEXT_PUBLIC_FIREBASE_APP_ID }}
@@ -66,3 +63,6 @@ jobs:
             NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID=${{ vars.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID }}
             NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=${{ vars.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID }}
             NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=${{ vars.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET }}
+```
+
+He añadido las dependencias que faltaban. Ahora tu `build` debería funcionar correctamente.

@@ -8,7 +8,7 @@
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
-    "docker:push": "echo 'Por favor, edita este script en package.json y reemplaza TU_USUARIO_DOCKERHUB con tu nombre de usuario.' && docker build -t TU_USUARIO_DOCKERHUB/constructpablo-app:latest . && docker push TU_USUARIO_DOCKERHUB/constructpablo-app:latest"
+    "docker:push": "docker build -t jlizancandela/constructpablo-app:latest . && docker push jlizancandela/constructpablo-app:latest"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",
@@ -38,8 +38,11 @@
     "date-fns": "^3.6.0",
     "dexie": "^4.0.7",
     "dexie-react-hooks": "^1.1.7",
+    "dotenv": "^16.4.5",
     "embla-carousel-react": "^8.6.0",
     "file-saver": "^2.0.5",
+    "firebase-admin": "^12.2.0",
+    "formidable": "^3.5.1",
     "jszip": "^3.10.1",
     "lucide-react": "^0.475.0",
     "next": "15.3.3",
@@ -56,12 +59,13 @@
   },
   "devDependencies": {
     "@types/file-saver": "^2.0.7",
+    "@types/formidable": "^3.4.5",
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",
     "@types/uuid": "^10.0.0",
     "postcss": "^8",
-    "tailwindcss": "^3.4.1",
+    "tailwindcss": "^3.4.10",
     "typescript": "^5"
   }
 }
