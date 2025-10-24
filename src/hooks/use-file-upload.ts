@@ -2,12 +2,12 @@
 'use client';
 
 import { useState } from 'react';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { ref, uploadBytesResumable, getDownloadURL, UploadTaskSnapshot } from 'firebase/storage';
 import { useStorage } from '@/firebase';
 import { useToast } from './use-toast';
 
 /**
- * Hook para gestionar la subida de archivos a Firebase Storage.
+ * Hook para gestionar la subida de archivos a Firebase Storage con seguimiento de progreso.
  * Proporciona el estado de la subida y una función para iniciarla.
  * @returns {{ uploadFile: (file: File, path: string) => Promise<{ downloadURL: string; metadata: any }>, isUploading: boolean, uploadProgress: number }}
  * Un objeto con la función `uploadFile`, el estado `isUploading` y el `uploadProgress`.
@@ -30,20 +30,38 @@ export const useFileUpload = () => {
   ): Promise<{ downloadURL: string; metadata: any }> => {
     return new Promise((resolve, reject) => {
       setIsUploading(true);
-      setUploadProgress(0); // Nota: uploadBytes no proporciona progreso. Se necesitaría uploadBytesResumable para eso.
+      setUploadProgress(0);
 
       const storageRef = ref(storage, `${path}/${file.name}`);
+      const uploadTask = uploadBytesResumable(storageRef, file);
 
-      uploadBytes(storageRef, file)
-        .then((snapshot) => {
-          getDownloadURL(snapshot.ref)
+      uploadTask.on(
+        'state_changed',
+        (snapshot: UploadTaskSnapshot) => {
+          const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+          setUploadProgress(progress);
+        },
+        (error) => {
+          console.error('Error uploading file:', error);
+          toast({
+            variant: 'destructive',
+            title: 'Error de subida',
+            description: `No se pudo subir el archivo ${file.name}.`,
+          });
+          setIsUploading(false);
+          setUploadProgress(0);
+          reject(error);
+        },
+        () => {
+          // Subida completada con éxito
+          getDownloadURL(uploadTask.snapshot.ref)
             .then((downloadURL) => {
               toast({
                 title: 'Archivo subido',
                 description: `El archivo ${file.name} se ha subido correctamente.`,
               });
               setIsUploading(false);
-              resolve({ downloadURL, metadata: snapshot.metadata });
+              resolve({ downloadURL, metadata: uploadTask.snapshot.metadata });
             })
             .catch((error) => {
               console.error('Error getting download URL:', error);
@@ -55,17 +73,8 @@ export const useFileUpload = () => {
               setIsUploading(false);
               reject(error);
             });
-        })
-        .catch((error) => {
-          console.error('Error uploading file:', error);
-          toast({
-            variant: 'destructive',
-            title: 'Error de subida',
-            description: `No se pudo subir el archivo ${file.name}.`,
-          });
-          setIsUploading(false);
-          reject(error);
-        });
+        }
+      );
     });
   };
 
