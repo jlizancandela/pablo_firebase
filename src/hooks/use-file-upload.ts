@@ -2,81 +2,85 @@
 'use client';
 
 import { useState } from 'react';
-import { ref, uploadBytesResumable, getDownloadURL, UploadTaskSnapshot } from 'firebase/storage';
-import { useStorage } from '@/firebase';
 import { useToast } from './use-toast';
 
 /**
- * Hook para gestionar la subida de archivos a Firebase Storage con seguimiento de progreso.
+ * Hook para gestionar la subida de archivos a un endpoint de API propio.
  * Proporciona el estado de la subida y una función para iniciarla.
- * @returns {{ uploadFile: (file: File, path: string) => Promise<{ downloadURL: string; metadata: any }>, isUploading: boolean, uploadProgress: number }}
+ * @returns {{ uploadFile: (file: File) => Promise<{ downloadURL: string }>, isUploading: boolean, uploadProgress: number }}
  * Un objeto con la función `uploadFile`, el estado `isUploading` y el `uploadProgress`.
  */
 export const useFileUpload = () => {
-  const storage = useStorage();
   const { toast } = useToast();
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
 
   /**
-   * Sube un archivo a una ruta específica en Firebase Storage.
+   * Sube un archivo a través del endpoint de la API /api/upload.
    * @param {File} file - El archivo a subir.
-   * @param {string} path - La ruta en Storage donde se guardará el archivo.
-   * @returns {Promise<{ downloadURL: string; metadata: any }>} Una promesa que se resuelve con la URL de descarga y los metadatos del archivo.
+   * @returns {Promise<{ downloadURL: string }>} Una promesa que se resuelve con la URL de descarga del archivo.
    */
   const uploadFile = (
-    file: File,
-    path: string
-  ): Promise<{ downloadURL: string; metadata: any }> => {
+    file: File
+  ): Promise<{ downloadURL: string }> => {
     return new Promise((resolve, reject) => {
       setIsUploading(true);
       setUploadProgress(0);
 
-      const storageRef = ref(storage, `${path}/${file.name}_${Date.now()}`);
-      const uploadTask = uploadBytesResumable(storageRef, file);
+      const xhr = new XMLHttpRequest();
+      xhr.open('POST', '/api/upload', true);
 
-      uploadTask.on(
-        'state_changed',
-        (snapshot: UploadTaskSnapshot) => {
-          const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+      // Seguir el progreso de la subida
+      xhr.upload.onprogress = (event) => {
+        if (event.lengthComputable) {
+          const progress = (event.loaded / event.total) * 100;
           setUploadProgress(progress);
-        },
-        (error) => {
-          console.error('Error uploading file:', error);
+        }
+      };
+
+      // Manejar el éxito de la subida
+      xhr.onload = () => {
+        setUploadProgress(100);
+        setIsUploading(false);
+        if (xhr.status === 200) {
+          try {
+            const response = JSON.parse(xhr.responseText);
+            resolve({ downloadURL: response.downloadURL });
+          } catch (error) {
+             toast({
+              variant: 'destructive',
+              title: 'Error de subida',
+              description: 'La respuesta del servidor no es válida.',
+            });
+            reject(new Error('Invalid JSON response from server.'));
+          }
+        } else {
+          const errorText = xhr.responseText || 'No se pudo subir el archivo.';
           toast({
             variant: 'destructive',
             title: 'Error de subida',
-            description: `No se pudo subir el archivo ${file.name}.`,
+            description: errorText,
           });
-          setIsUploading(false);
-          setUploadProgress(0);
-          reject(error);
-        },
-        () => {
-          // Subida completada con éxito. Aseguramos que la barra llegue al 100%.
-          setUploadProgress(100);
-          getDownloadURL(uploadTask.snapshot.ref)
-            .then((downloadURL) => {
-              resolve({ downloadURL, metadata: uploadTask.snapshot.metadata });
-            })
-            .catch((error) => {
-              console.error('Error getting download URL:', error);
-              toast({
-                variant: 'destructive',
-                title: 'Error',
-                description: 'No se pudo obtener la URL del archivo.',
-              });
-              reject(error);
-            })
-            .finally(() => {
-              // Resetear estado después de un breve retraso para que la UI se actualice.
-              setTimeout(() => {
-                setIsUploading(false);
-                setUploadProgress(0);
-              }, 500);
-            });
+          reject(new Error(errorText));
         }
-      );
+      };
+
+      // Manejar errores de red
+      xhr.onerror = () => {
+        setIsUploading(false);
+        setUploadProgress(0);
+        const errorText = 'Error de red al intentar subir el archivo.';
+        toast({
+          variant: 'destructive',
+          title: 'Error de red',
+          description: errorText,
+        });
+        reject(new Error(errorText));
+      };
+
+      const formData = new FormData();
+      formData.append('file', file);
+      xhr.send(formData);
     });
   };
 

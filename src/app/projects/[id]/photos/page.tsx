@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Camera, PlusCircle, Trash2, Upload, Save } from "lucide-react";
 import { useFileUpload } from "@/hooks/use-file-upload";
 import { useRef, useState, useEffect } from "react";
-import { useFirebase, addPhotoToProjectNonBlocking, updateDocumentNonBlocking } from "@/firebase";
+import { useFirebase, addPhotoToProjectNonBlocking } from '@/firebase';
 import { doc, Timestamp, arrayRemove } from "firebase/firestore";
 import type { Photo } from "@/lib/data";
 import { Textarea } from "@/components/ui/textarea";
@@ -24,11 +24,12 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/components/ui/alert-dialog"
+} from "@/components/ui/alert-dialog";
+import { updateDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 
 /**
  * Página que muestra la galería de fotos de un proyecto.
- * Permite añadir nuevas fotos (funcionalidad futura) y ver las existentes.
+ * Permite añadir nuevas fotos y ver las existentes.
  * @returns {JSX.Element} El componente de la página de galería de fotos.
  */
 export default function ProjectPhotosPage() {
@@ -54,7 +55,7 @@ export default function ProjectPhotosPage() {
    * Maneja la selección de un archivo para subirlo.
    * @param {React.ChangeEvent<HTMLInputElement>} event - El evento de cambio del input de archivo.
    */
-  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
@@ -63,34 +64,34 @@ export default function ProjectPhotosPage() {
       description: `Subiendo ${file.name}...`,
     });
 
-    uploadFile(file, `projects/${project.id}/photos`)
-      .then(({ downloadURL }) => {
-        const randomGalleryImage = PlaceHolderImages.find(p => p.id.startsWith('project-gallery')) || PlaceHolderImages[randomImageIndex];
-        
-        const newPhoto: Photo = {
-          id: `photo_${Date.now()}`,
-          url: downloadURL,
-          hint: randomGalleryImage.imageHint,
-          comment: '',
-          capturedAt: Timestamp.now(),
-        };
+    try {
+      const { downloadURL } = await uploadFile(file);
+      
+      const randomGalleryImage = PlaceHolderImages.find(p => p.id.startsWith('project-gallery')) || PlaceHolderImages[randomImageIndex];
+      
+      const newPhoto: Photo = {
+        id: `photo_${Date.now()}`,
+        url: downloadURL,
+        hint: randomGalleryImage.imageHint,
+        comment: '',
+        capturedAt: Timestamp.now(),
+      };
 
-        // Use the new atomic, non-blocking function
-        addPhotoToProjectNonBlocking(projectRef, newPhoto);
+      // Usa la función no bloqueante para añadir la foto al array en Firestore
+      addPhotoToProjectNonBlocking(projectRef, newPhoto);
 
-        toast({
-          title: '¡Foto subida!',
-          description: 'La foto se ha añadido a tu proyecto y aparecerá en breve.',
-        });
-      })
-      .catch((error) => {
-        console.error("Error subiendo la foto: ", error);
-        toast({
-          variant: "destructive",
-          title: 'Error de subida',
-          description: error instanceof Error ? error.message : 'No se pudo subir la foto.',
-        });
+      toast({
+        title: '¡Foto subida!',
+        description: 'La foto se ha añadido a tu proyecto y aparecerá en breve.',
       });
+    } catch (error) {
+      console.error("Error subiendo la foto: ", error);
+      toast({
+        variant: "destructive",
+        title: 'Error de subida',
+        description: error instanceof Error ? error.message : 'No se pudo subir la foto.',
+      });
+    }
   };
   
   /**
