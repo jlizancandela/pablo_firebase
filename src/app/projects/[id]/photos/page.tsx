@@ -60,7 +60,7 @@ export default function ProjectPhotosPage() {
 
   useEffect(() => {
     // La API de Navegador solo está disponible en el cliente, por eso se comprueba en un useEffect.
-    if (typeof navigator !== 'undefined' && navigator.share) {
+    if (typeof navigator !== 'undefined' && 'share' in navigator) {
       setIsShareApiAvailable(true);
     }
   }, []);
@@ -172,7 +172,7 @@ export default function ProjectPhotosPage() {
   const handleShare = async (photo: Photo) => {
     try {
         const file = await dataUrlToFile(photo.url, `foto-proyecto-${photo.id}.png`);
-        if (navigator.canShare({ files: [file] })) {
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
             await navigator.share({
                 files: [file],
                 title: `Foto del proyecto: ${project.name}`,

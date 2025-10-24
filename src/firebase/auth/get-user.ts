@@ -2,7 +2,7 @@
 import { Auth, User } from 'firebase/auth';
 
 let user: User | null = null;
-let auth: Auth | null;
+let auth: Auth | null = null;
 
 /**
  * Obtiene el usuario actualmente autenticado desde la instancia de Auth.
@@ -12,4 +12,5 @@ export function getUser() {
   if (auth) {
     return auth.currentUser;
   }
+  return null;
 }
