@@ -13,6 +13,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
+import { Progress } from "@/components/ui/progress";
 
 /**
  * Determina la variante de estilo para un badge de estado.
@@ -178,17 +179,27 @@ export default function ProjectPhasesPage() {
       <Card>
         <CardContent className="p-0">
           <Accordion type="single" collapsible className="w-full" defaultValue="item-0">
-            {project.phases.map((phase, index) => (
+            {project.phases.map((phase, index) => {
+               const totalCheckpoints = phase.checkpoints.length;
+               const completedCheckpoints = phase.checkpoints.filter(c => c.status === 'Completado').length;
+               const progress = totalCheckpoints > 0 ? Math.round((completedCheckpoints / totalCheckpoints) * 100) : 0;
+
+              return (
               <AccordionItem value={`item-${index}`} key={phase.id}>
                 <AccordionTrigger 
                   className="p-6 hover:no-underline"
-                  onClick={(e) => handlePhaseClick(e, phase.id)}
                 >
-                  <div className="flex items-center gap-4 w-full">
-                    {statusIcon(phase.status)}
+                  <div className="flex items-start gap-4 w-full">
+                    <div className="mt-1 cursor-pointer" onClick={(e) => handlePhaseClick(e, phase.id)}>
+                      {statusIcon(phase.status)}
+                    </div>
                     <div className="flex-1 text-left">
                       <h3 className="font-semibold text-lg">{phase.title}</h3>
                       <p className="text-sm text-muted-foreground">{phase.objective}</p>
+                      <div className="flex items-center gap-4 mt-3">
+                        <Progress value={progress} className="h-2 w-full max-w-xs" />
+                        <span className="text-sm font-medium text-muted-foreground">{progress}%</span>
+                      </div>
                     </div>
                     <Badge variant={statusBadgeVariant(phase.status)} className="w-28 justify-center hidden md:flex">
                       {phase.status}
@@ -255,7 +266,7 @@ export default function ProjectPhasesPage() {
                   </div>
                 </AccordionContent>
               </AccordionItem>
-            ))}
+            )})}
           </Accordion>
         </CardContent>
       </Card>
