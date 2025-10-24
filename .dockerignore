@@ -1,24 +1,22 @@
-# Dependencias
-node_modules
-
-# Logs
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-pnpm-debug.log*
-
-# Directorios de compilación
-.next/
-out/
-
 # Docker
 Dockerfile
 .dockerignore
 
-# Otros
+# Git
+.git
+.gitignore
+
+# Node
+node_modules
+npm-debug.log
+.next/
+.turbo/
+build/
+dist/
+
+# Local Environment
 .env
 .env.local
 .env.development.local
 .env.test.local
 .env.production.local
-README.md
