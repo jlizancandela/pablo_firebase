@@ -13,13 +13,7 @@ import { getStorage, FirebaseStorage } from 'firebase/storage';
  * @returns {{ firebaseApp: FirebaseApp, auth: Auth, firestore: Firestore, storage: FirebaseStorage }}
  */
 export function initializeFirebase() {
-  let app: FirebaseApp;
-
-  if (!getApps().length) {
-    app = initializeApp(firebaseConfig);
-  } else {
-    app = getApp();
-  }
+  const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
   
   const auth = getAuth(app);
   const firestore = getFirestore(app);
