@@ -29,16 +29,16 @@ jobs:
         run: npm run build
 
       - name: Lint Code
-        run: npm run lint
+        run: next lint
 
       - name: Type Check
-        run: npm run typecheck
+        run: tsc --noEmit
 
   build-and-push-docker:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     needs: build-and-test
     runs-on: ubuntu-latest
-    
+    environment: production
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
