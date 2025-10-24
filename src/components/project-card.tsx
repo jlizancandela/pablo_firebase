@@ -20,6 +20,10 @@ interface ProjectCardProps {
    * Función callback que se ejecuta cuando se solicita la eliminación del proyecto.
    */
   onDelete: () => void;
+  /**
+   * Indica si la imagen de esta tarjeta debe ser cargada con prioridad.
+   */
+  priority?: boolean;
 }
 
 /**
@@ -42,7 +46,7 @@ function formatDate(date: any): string {
  * @param {ProjectCardProps} props - Las propiedades del componente.
  * @returns {JSX.Element} La tarjeta del proyecto.
  */
-export default function ProjectCard({ project, onDelete }: ProjectCardProps) {
+export default function ProjectCard({ project, onDelete, priority = false }: ProjectCardProps) {
     /**
      * Maneja el evento de clic en el botón de eliminar, previniendo la navegación
      * y llamando a la función `onDelete`.
@@ -65,6 +69,7 @@ export default function ProjectCard({ project, onDelete }: ProjectCardProps) {
               fill
               className="object-cover rounded-t-lg"
               data-ai-hint={project.coverPhotoHint}
+              priority={priority}
             />
              <div className="absolute inset-0 bg-black/20 rounded-t-lg"></div>
               <Button
