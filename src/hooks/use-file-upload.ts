@@ -56,11 +56,11 @@ export const useFileUpload = () => {
           // Subida completada con éxito
           getDownloadURL(uploadTask.snapshot.ref)
             .then((downloadURL) => {
+              setUploadProgress(100); // Asegurar que la barra llega al 100%
               toast({
                 title: 'Archivo subido',
                 description: `El archivo ${file.name} se ha subido correctamente.`,
               });
-              setIsUploading(false);
               resolve({ downloadURL, metadata: uploadTask.snapshot.metadata });
             })
             .catch((error) => {
@@ -70,8 +70,10 @@ export const useFileUpload = () => {
                 title: 'Error',
                 description: 'No se pudo obtener la URL del archivo.',
               });
-              setIsUploading(false);
               reject(error);
+            })
+            .finally(() => {
+              setIsUploading(false);
             });
         }
       );
