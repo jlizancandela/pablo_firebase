@@ -7,8 +7,8 @@ import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Camera, PlusCircle, Trash2, Upload, Save } from "lucide-react";
 import { useFileUpload } from "@/hooks/use-file-upload";
-import { useRef, useState } from "react";
-import { useFirebase, updateDocumentNonBlocking, deleteDocumentNonBlocking } from "@/firebase";
+import { useRef, useState, useEffect } from "react";
+import { useFirebase, updateDocumentNonBlocking } from "@/firebase";
 import { doc, Timestamp } from "firebase/firestore";
 import type { Photo } from "@/lib/data";
 import { Textarea } from "@/components/ui/textarea";
@@ -39,7 +39,12 @@ export default function ProjectPhotosPage() {
   const { toast } = useToast();
   const [photoComments, setPhotoComments] = useState<Record<string, string>>({});
   const [photoToDelete, setPhotoToDelete] = useState<Photo | null>(null);
+  const [randomImageIndex, setRandomImageIndex] = useState(4);
 
+  useEffect(() => {
+    // Generate random number only on the client side after hydration
+    setRandomImageIndex(Math.floor(Math.random() * 4) + 4);
+  }, []);
 
   if (!user || !project) return null;
 
@@ -60,7 +65,7 @@ export default function ProjectPhotosPage() {
 
     uploadFile(file, `projects/${project.id}/photos`)
       .then(({ downloadURL }) => {
-        const randomGalleryImage = PlaceHolderImages.find(p => p.id.startsWith('project-gallery')) || PlaceHolderImages[4];
+        const randomGalleryImage = PlaceHolderImages.find(p => p.id.startsWith('project-gallery')) || PlaceHolderImages[randomImageIndex];
         
         const newPhoto: Photo = {
           id: `photo_${Date.now()}`,
@@ -72,7 +77,6 @@ export default function ProjectPhotosPage() {
 
         const updatedPhotos = [...project.photos, newPhoto];
 
-        // Usa la actualización no bloqueante para una experiencia offline-first
         updateDocumentNonBlocking(projectRef, {
           photos: updatedPhotos
         });
@@ -123,7 +127,8 @@ export default function ProjectPhotosPage() {
   const handleDeletePhoto = () => {
     if (!photoToDelete) return;
     const updatedPhotos = project.photos.filter(p => p.id !== photoToDelete.id);
-    deleteDocumentNonBlocking(doc(firestore, 'users', user.uid, 'projects', project.id), { photos: updatedPhotos });
+    const projectDocRef = doc(firestore, 'users', user.uid, 'projects', project.id);
+    updateDocumentNonBlocking(projectDocRef, { photos: updatedPhotos });
     toast({
       title: 'Foto eliminada',
       description: 'La foto ha sido eliminada del proyecto.',
