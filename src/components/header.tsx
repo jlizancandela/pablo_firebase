@@ -1,7 +1,7 @@
 
 'use client';
 
-import { Building2, Download, RefreshCw, HardHat } from "lucide-react";
+import { Building2, Download, RefreshCw, HardHat, Upload } from "lucide-react";
 import Link from "next/link";
 import { Button } from "./ui/button";
 import { Avatar, AvatarFallback } from "./ui/avatar";
@@ -13,11 +13,12 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "./ui/dropdown-menu";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { db } from "@/lib/db";
 import JSZip from "jszip";
 import { saveAs } from 'file-saver';
 import { useToast } from "@/hooks/use-toast";
+import type { Project } from "@/lib/data";
 
 /**
  * Interfaz para el evento `beforeinstallprompt`.
@@ -43,16 +44,11 @@ interface BeforeInstallPromptEvent extends Event {
 export default function Header() {
   const [installPrompt, setInstallPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const { toast } = useToast();
+  const importInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    /**
-     * Maneja el evento `beforeinstallprompt` para controlar la instalación de la PWA.
-     * @param {Event} event - El evento `beforeinstallprompt`.
-     */
     const handleBeforeInstallPrompt = (event: Event) => {
-      // Previene que el mini-infobar aparezca en Chrome.
       event.preventDefault();
-      // Guarda el evento para que pueda ser disparado más tarde.
       setInstallPrompt(event as BeforeInstallPromptEvent);
     };
 
@@ -63,24 +59,15 @@ export default function Header() {
     };
   }, []);
 
-  /**
-   * Maneja el clic en el botón de instalación.
-   * Muestra el prompt de instalación al usuario.
-   */
   const handleInstallClick = () => {
-    if (!installPrompt) {
-      return;
-    }
-    // Muestra el prompt de instalación.
+    if (!installPrompt) return;
     installPrompt.prompt();
-    // Espera a que el usuario responda al prompt.
     installPrompt.userChoice.then((choiceResult) => {
       if (choiceResult.outcome === 'accepted') {
         console.log('El usuario aceptó instalar la PWA');
       } else {
         console.log('El usuario rechazó instalar la PWA');
       }
-      // Solo podemos usar el prompt una vez.
       setInstallPrompt(null);
     });
   };
@@ -97,18 +84,17 @@ export default function Header() {
         const projectFolder = zip.folder(`project_${project.id}`);
         const photoFolder = projectFolder?.folder('photos');
         
-        const photoPromises = project.photos.map(async (photo, index) => {
+        const photoPromises = project.photos.map(async (photo) => {
           try {
             const response = await fetch(photo.url);
             const blob = await response.blob();
             const extension = blob.type.split('/')[1] || 'jpg';
             const filename = `photo_${photo.id}.${extension}`;
             photoFolder?.file(filename, blob);
-            // Return a path relative to the zip for the JSON
             return { ...photo, url: `photos/${filename}` };
           } catch (e) {
             console.error(`Failed to fetch photo ${photo.url}`, e);
-            return { ...photo, url: 'failed_to_download' }; // Keep original URL but mark as failed
+            return { ...photo, url: 'failed_to_download' };
           }
         });
 
@@ -131,6 +117,59 @@ export default function Header() {
     }
   };
 
+  const handleImport = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    toast({ title: "Importando copia de seguridad...", description: "Leyendo el archivo. Por favor, espera." });
+
+    try {
+        const zip = await JSZip.loadAsync(file);
+        const dataFile = zip.file('data.json');
+        if (!dataFile) {
+            throw new Error('El archivo data.json no se encontró en el ZIP.');
+        }
+
+        const content = await dataFile.async('string');
+        let projectsToImport: Project[] = JSON.parse(content);
+        
+        // Process photos: convert relative paths back to Blob URLs
+        for (const project of projectsToImport) {
+            const photoFolder = zip.folder(`project_${project.id}/photos`);
+            if (photoFolder) {
+                const updatedPhotos = [];
+                for (const photo of project.photos) {
+                    const relativePath = photo.url.startsWith('photos/') ? photo.url.substring(7) : photo.url;
+                    const photoFile = photoFolder.file(relativePath);
+                    if (photoFile) {
+                        const blob = await photoFile.async('blob');
+                        const blobUrl = URL.createObjectURL(blob);
+                        updatedPhotos.push({ ...photo, url: blobUrl });
+                    } else {
+                        updatedPhotos.push(photo); // Keep if not found
+                    }
+                }
+                project.photos = updatedPhotos;
+            }
+             // Ensure dates are converted back to Date objects
+            project.startDate = new Date(project.startDate);
+        }
+
+        await db.projects.clear();
+        await db.projects.bulkAdd(projectsToImport as any);
+
+        toast({ title: "¡Importación completada!", description: "Tus proyectos han sido restaurados." });
+    } catch (error) {
+        console.error("Import failed:", error);
+        const errorMessage = error instanceof Error ? error.message : "Error desconocido.";
+        toast({ variant: "destructive", title: "Error de importación", description: `No se pudo importar: ${errorMessage}` });
+    } finally {
+        // Reset file input
+        if (importInputRef.current) {
+            importInputRef.current.value = "";
+        }
+    }
+};
 
   return (
     <header className="sticky top-0 z-40 w-full border-b bg-card">
@@ -149,6 +188,18 @@ export default function Header() {
           <Button variant="ghost" size="sm" className="hidden sm:inline-flex" onClick={() => window.location.reload()}>
             <RefreshCw className="mr-2 h-4 w-4" />
             Refrescar Datos
+          </Button>
+
+          <input
+            type="file"
+            ref={importInputRef}
+            className="hidden"
+            accept=".zip"
+            onChange={handleImport}
+          />
+          <Button variant="outline" size="sm" className="hidden sm:inline-flex" onClick={() => importInputRef.current?.click()}>
+            <Upload className="mr-2 h-4 w-4" />
+            Importar Copia
           </Button>
           <Button variant="outline" size="sm" className="hidden sm:inline-flex" onClick={handleExportAll}>
             <Download className="mr-2 h-4 w-4" />

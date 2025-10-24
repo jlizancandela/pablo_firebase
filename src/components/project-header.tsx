@@ -1,10 +1,8 @@
 
 import Image from 'next/image';
 import type { Project } from '@/lib/data';
-import { Button } from './ui/button';
-import { Download, Upload, ListTodo, Camera, ClipboardList } from 'lucide-react';
+import { ListTodo, Camera, ClipboardList } from 'lucide-react';
 import { Card, CardContent } from './ui/card';
-import { Separator } from './ui/separator';
 
 /**
  * @typedef {import('@/lib/data').Project} Project
@@ -43,28 +41,21 @@ export default function ProjectHeader({ project }: ProjectHeaderProps) {
         </div>
       </div>
       <Card className="-mt-12 mx-auto w-[95%] z-10 relative shadow-lg">
-          <CardContent className="p-4 flex items-center justify-between">
-            <div className="flex-1 flex justify-around">
-                <div className="text-center">
-                    <ListTodo className="h-6 w-6 mx-auto text-primary"/>
-                    <p className="text-2xl font-bold">{openTasks}</p>
-                    <p className="text-sm text-muted-foreground">Tareas Abiertas</p>
-                </div>
-                <div className="text-center">
-                    <Camera className="h-6 w-6 mx-auto text-primary"/>
-                    <p className="text-2xl font-bold">{project.photos.length}</p>
-                    <p className="text-sm text-muted-foreground">Fotos</p>
-                </div>
-                <div className="text-center">
-                    <ClipboardList className="h-6 w-6 mx-auto text-primary"/>
-                    <p className="text-2xl font-bold">{project.visits.length}</p>
-                    <p className="text-sm text-muted-foreground">Visitas</p>
-                </div>
+          <CardContent className="p-4 flex items-center justify-around">
+            <div className="text-center">
+                <ListTodo className="h-6 w-6 mx-auto text-primary"/>
+                <p className="text-2xl font-bold">{openTasks}</p>
+                <p className="text-sm text-muted-foreground">Tareas Abiertas</p>
             </div>
-            <Separator orientation="vertical" className="h-16 mx-4" />
-            <div className="flex flex-col gap-2">
-               <Button variant="outline" size="sm"><Upload className="mr-2 h-4 w-4" /> Importar Datos</Button>
-               <Button variant="outline" size="sm"><Download className="mr-2 h-4 w-4" /> Exportar Datos</Button>
+            <div className="text-center">
+                <Camera className="h-6 w-6 mx-auto text-primary"/>
+                <p className="text-2xl font-bold">{project.photos.length}</p>
+                <p className="text-sm text-muted-foreground">Fotos</p>
+            </div>
+            <div className="text-center">
+                <ClipboardList className="h-6 w-6 mx-auto text-primary"/>
+                <p className="text-2xl font-bold">{project.visits.length}</p>
+                <p className="text-sm text-muted-foreground">Visitas</p>
             </div>
           </CardContent>
       </Card>
