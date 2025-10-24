@@ -11,9 +11,11 @@ import {
   SetOptions,
   DocumentData,
   WithFieldValue,
+  arrayUnion,
 } from 'firebase/firestore';
 import { errorEmitter } from '@/firebase/error-emitter';
 import {FirestorePermissionError} from '@/firebase/errors';
+import { Photo } from '@/lib/data';
 
 /**
  * Initiates a setDoc operation for a document reference.
@@ -71,6 +73,27 @@ export function updateDocumentNonBlocking(docRef: DocumentReference, data: WithF
         })
       )
     });
+}
+
+/**
+ * Initiates an non-blocking update to add a new photo to a project's 'photos' array.
+ * Uses Firestore's `arrayUnion` for an atomic update.
+ * @param {DocumentReference} projectRef - Reference to the project document.
+ * @param {Photo} newPhoto - The new photo object to add.
+ */
+export function addPhotoToProjectNonBlocking(projectRef: DocumentReference, newPhoto: Photo) {
+  updateDoc(projectRef, {
+    photos: arrayUnion(newPhoto)
+  }).catch(error => {
+    errorEmitter.emit(
+      'permission-error',
+      new FirestorePermissionError({
+        path: projectRef.path,
+        operation: 'update',
+        requestResourceData: { photos: `arrayUnion(${JSON.stringify(newPhoto)})` },
+      })
+    );
+  });
 }
 
 

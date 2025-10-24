@@ -8,8 +8,8 @@ import { Button } from "@/components/ui/button";
 import { Camera, PlusCircle, Trash2, Upload, Save } from "lucide-react";
 import { useFileUpload } from "@/hooks/use-file-upload";
 import { useRef, useState, useEffect } from "react";
-import { useFirebase, updateDocumentNonBlocking } from "@/firebase";
-import { doc, Timestamp } from "firebase/firestore";
+import { useFirebase, addPhotoToProjectNonBlocking, updateDocumentNonBlocking } from "@/firebase";
+import { doc, Timestamp, arrayRemove } from "firebase/firestore";
 import type { Photo } from "@/lib/data";
 import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
@@ -75,15 +75,12 @@ export default function ProjectPhotosPage() {
           capturedAt: Timestamp.now(),
         };
 
-        const updatedPhotos = [...project.photos, newPhoto];
-
-        updateDocumentNonBlocking(projectRef, {
-          photos: updatedPhotos
-        });
+        // Use the new atomic, non-blocking function
+        addPhotoToProjectNonBlocking(projectRef, newPhoto);
 
         toast({
           title: '¡Foto subida!',
-          description: 'La foto se ha añadido a tu proyecto.',
+          description: 'La foto se ha añadido a tu proyecto y aparecerá en breve.',
         });
       })
       .catch((error) => {
@@ -126,9 +123,12 @@ export default function ProjectPhotosPage() {
    */
   const handleDeletePhoto = () => {
     if (!photoToDelete) return;
-    const updatedPhotos = project.photos.filter(p => p.id !== photoToDelete.id);
-    const projectDocRef = doc(firestore, 'users', user.uid, 'projects', project.id);
-    updateDocumentNonBlocking(projectDocRef, { photos: updatedPhotos });
+    
+    // Use arrayRemove for atomic, non-blocking deletion from the array
+    updateDocumentNonBlocking(projectRef, {
+      photos: arrayRemove(photoToDelete)
+    });
+
     toast({
       title: 'Foto eliminada',
       description: 'La foto ha sido eliminada del proyecto.',
