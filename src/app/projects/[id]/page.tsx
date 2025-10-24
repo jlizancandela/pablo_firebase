@@ -7,6 +7,12 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Timestamp } from "firebase/firestore";
 
+/**
+ * Formatea una fecha para mostrarla en la interfaz.
+ * Admite objetos Timestamp de Firestore, objetos Date de JS o cadenas de fecha.
+ * @param {any} date - La fecha a formatear.
+ * @returns {string} La fecha formateada como una cadena legible.
+ */
 function formatDate(date: any): string {
     if (!date) return '';
     if (date instanceof Timestamp) {
@@ -18,6 +24,11 @@ function formatDate(date: any): string {
     return new Date(date).toLocaleDateString();
 }
 
+/**
+ * Página de resumen del proyecto.
+ * Muestra los detalles clave del proyecto y un resumen del progreso general.
+ * @returns {JSX.Element} El componente de la página de resumen del proyecto.
+ */
 export default function ProjectOverviewPage() {
   const project = useProject();
 

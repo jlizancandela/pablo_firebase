@@ -11,22 +11,44 @@ import { Phase, PhaseStatus, CheckpointStatus, Checkpoint } from "@/lib/data";
 import { useFirebase } from "@/firebase";
 import { doc, updateDoc } from "firebase/firestore";
 
+/**
+ * Determina la variante de estilo para un badge de estado.
+ * @param {PhaseStatus | CheckpointStatus} status - El estado actual de la fase o checkpoint.
+ * @returns {'outline' | 'secondary' | 'default'} La variante del badge.
+ */
 const statusBadgeVariant = (status: PhaseStatus | CheckpointStatus): 'outline' | 'secondary' | 'default' => {
   if (status === 'No iniciada' || status === 'No iniciado') return 'outline';
   if (status === 'En curso') return 'secondary';
   return 'default';
 };
 
+/**
+ * Devuelve un icono basado en el estado de una fase o checkpoint.
+ * @param {PhaseStatus | CheckpointStatus} status - El estado actual.
+ * @returns {JSX.Element} Un componente de icono.
+ */
 const statusIcon = (status: PhaseStatus | CheckpointStatus) => {
   if (status === 'No iniciada' || status === 'No iniciado') return <Circle className="h-5 w-5 text-muted-foreground" />;
   if (status === 'En curso') return <Radio className="h-5 w-5 text-yellow-500" />;
   return <CheckCircle2 className="h-5 w-5 text-green-500" />;
 }
 
+/**
+ * Página que muestra y gestiona las fases de obra de un proyecto.
+ * Permite actualizar el estado de las fases y sus checkpoints.
+ * @returns {JSX.Element} El componente de la página de fases.
+ */
 export default function ProjectPhasesPage() {
   const project = useProject();
   const { firestore, user } = useFirebase();
 
+  /**
+   * Maneja el cambio de valor de un campo de un checkpoint (ej. un checkbox).
+   * @param {string} phaseId - El ID de la fase.
+   * @param {string} checkpointId - El ID del checkpoint.
+   * @param {string} fieldId - El ID del campo a actualizar.
+   * @param {any} newValue - El nuevo valor para el campo.
+   */
   const handleFieldChange = async (phaseId: string, checkpointId: string, fieldId: string, newValue: any) => {
     if (!user) return;
 
@@ -49,6 +71,11 @@ export default function ProjectPhasesPage() {
     }
   };
 
+  /**
+   * Maneja el clic en una fase para ciclar su estado (No iniciada -> En curso -> Completada).
+   * @param {React.MouseEvent} e - El evento de clic del ratón.
+   * @param {string} phaseId - El ID de la fase que se está actualizando.
+   */
   const handlePhaseClick = async (e: React.MouseEvent, phaseId: string) => {
     e.stopPropagation();
     if (!user) return;
@@ -78,6 +105,11 @@ export default function ProjectPhasesPage() {
     }
   };
 
+  /**
+   * Maneja el clic en un checkpoint para ciclar su estado (No iniciado -> En curso -> Completado).
+   * @param {string} phaseId - El ID de la fase a la que pertenece el checkpoint.
+   * @param {string} checkpointId - El ID del checkpoint que se está actualizando.
+   */
   const handleCheckpointClick = async (phaseId: string, checkpointId: string) => {
     if (!user) return;
 

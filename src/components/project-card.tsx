@@ -9,11 +9,25 @@ import { Timestamp } from 'firebase/firestore';
 import { Button } from './ui/button';
 import React from 'react';
 
+/**
+ * @typedef {import('@/lib/data').Project} Project
+ */
 interface ProjectCardProps {
+  /**
+   * El objeto del proyecto a mostrar.
+   */
   project: Project;
+  /**
+   * Función callback que se ejecuta cuando se solicita la eliminación del proyecto.
+   */
   onDelete: () => void;
 }
 
+/**
+ * Formatea una fecha para mostrarla en la interfaz.
+ * @param {any} date - La fecha a formatear (puede ser Timestamp de Firestore, Date de JS o string).
+ * @returns {string} La fecha formateada como una cadena.
+ */
 function formatDate(date: any): string {
     if (!date) return '';
     if (date instanceof Timestamp) {
@@ -25,8 +39,18 @@ function formatDate(date: any): string {
     return new Date(date).toLocaleDateString();
 }
 
-
+/**
+ * Componente que muestra una tarjeta con la información resumida de un proyecto.
+ * Es un enlace a la página de detalles del proyecto y contiene un botón para eliminarlo.
+ * @param {ProjectCardProps} props - Las propiedades del componente.
+ * @returns {JSX.Element} La tarjeta del proyecto.
+ */
 export default function ProjectCard({ project, onDelete }: ProjectCardProps) {
+    /**
+     * Maneja el evento de clic en el botón de eliminar, previniendo la navegación
+     * y llamando a la función `onDelete`.
+     * @param {React.MouseEvent<HTMLButtonElement>} e - El evento del ratón.
+     */
     const handleDeleteClick = (e: React.MouseEvent<HTMLButtonElement>) => {
         e.preventDefault();
         e.stopPropagation();

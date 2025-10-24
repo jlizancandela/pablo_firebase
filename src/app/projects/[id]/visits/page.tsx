@@ -9,6 +9,11 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Timestamp } from "firebase/firestore";
 
+/**
+ * Formatea una fecha para mostrarla en un formato largo y legible.
+ * @param {any} date - La fecha a formatear (puede ser Timestamp, Date o string).
+ * @returns {string} La fecha formateada, ej: "19 de octubre de 2025".
+ */
 function formatDate(date: any): string {
     if (!date) return '';
     if (date instanceof Timestamp) {
@@ -20,7 +25,10 @@ function formatDate(date: any): string {
     return new Date(date).toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' });
 }
 
-
+/**
+ * Página que muestra el registro de visitas a obra de un proyecto.
+ * @returns {JSX.Element} El componente de la página de registro de visitas.
+ */
 export default function ProjectVisitsPage() {
   const project = useProject();
 

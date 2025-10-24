@@ -17,6 +17,11 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Timestamp } from "firebase/firestore";
 
+/**
+ * Devuelve un icono basado en el tipo de archivo.
+ * @param {FileAttachment['fileType']} fileType - El tipo de archivo.
+ * @returns {JSX.Element} Un componente de icono.
+ */
 function getFileIcon(fileType: FileAttachment['fileType']) {
   switch (fileType) {
     case 'pdf':
@@ -32,6 +37,12 @@ function getFileIcon(fileType: FileAttachment['fileType']) {
   }
 }
 
+/**
+ * Formatea una fecha para mostrarla en la interfaz.
+ * Admite objetos Timestamp de Firestore, objetos Date de JS o cadenas de fecha.
+ * @param {any} date - La fecha a formatear.
+ * @returns {string} La fecha formateada como una cadena.
+ */
 function formatDate(date: any): string {
     if (!date) return '';
     if (date instanceof Timestamp) {
@@ -43,7 +54,10 @@ function formatDate(date: any): string {
     return new Date(date).toLocaleDateString();
 }
 
-
+/**
+ * Página que muestra la lista de archivos asociados a un proyecto.
+ * @returns {JSX.Element} El componente de la página de archivos del proyecto.
+ */
 export default function ProjectFilesPage() {
   const project = useProject();
 

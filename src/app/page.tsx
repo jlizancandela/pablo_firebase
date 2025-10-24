@@ -53,6 +53,11 @@ const projectSchema = z.object({
 
 type ProjectFormData = z.infer<typeof projectSchema>;
 
+/**
+ * Página principal que muestra el panel de proyectos.
+ * Permite a los usuarios ver sus proyectos existentes, crear nuevos proyectos y eliminarlos.
+ * @returns {JSX.Element} El componente de la página de inicio.
+ */
 export default function Home() {
   const { firestore, user } = useFirebase();
   const [open, setOpen] = useState(false);
@@ -80,6 +85,10 @@ export default function Home() {
 
   const { data: projects, isLoading } = useCollection<Project>(projectsQuery);
 
+  /**
+   * Maneja el envío del formulario para crear un nuevo proyecto.
+   * @param {ProjectFormData} data - Los datos del formulario del proyecto.
+   */
   const onSubmit = (data: ProjectFormData) => {
     if (!user) return;
     const projectCollection = collection(firestore, 'users', user.uid, 'projects');
@@ -101,6 +110,9 @@ export default function Home() {
     setOpen(false);
   };
   
+  /**
+   * Maneja la eliminación de un proyecto después de la confirmación.
+   */
   const handleDeleteProject = () => {
     if (!projectToDelete || !user) return;
     const projectDocRef = doc(firestore, 'users', user.uid, 'projects', projectToDelete.id);
@@ -108,6 +120,12 @@ export default function Home() {
     setProjectToDelete(null);
   };
 
+  /**
+   * Componente que renderiza el botón y el diálogo para crear un nuevo proyecto.
+   * @param {object} props - Propiedades del componente.
+   * @param {boolean} [props.isCard] - Si es `true`, renderiza el botón en una tarjeta de placeholder.
+   * @returns {JSX.Element} El botón y el diálogo de creación de proyecto.
+   */
   const CreateProjectButton = ({ isCard }: { isCard?: boolean }) => (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>

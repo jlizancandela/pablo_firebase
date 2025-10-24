@@ -6,10 +6,22 @@ import { Download, Upload, ListTodo, Camera, ClipboardList } from 'lucide-react'
 import { Card, CardContent } from './ui/card';
 import { Separator } from './ui/separator';
 
+/**
+ * @typedef {import('@/lib/data').Project} Project
+ */
 interface ProjectHeaderProps {
+  /**
+   * El objeto del proyecto a mostrar en la cabecera.
+   */
   project: Project;
 }
 
+/**
+ * Componente que muestra la cabecera de la página de un proyecto.
+ * Incluye la imagen de portada, nombre, dirección y estadísticas clave.
+ * @param {ProjectHeaderProps} props - Las propiedades del componente.
+ * @returns {JSX.Element} La cabecera del proyecto.
+ */
 export default function ProjectHeader({ project }: ProjectHeaderProps) {
   const openTasks = project.tasks ? project.tasks.filter(t => !t.completed).length : 0;
   
@@ -59,5 +71,3 @@ export default function ProjectHeader({ project }: ProjectHeaderProps) {
     </div>
   );
 }
-
-    

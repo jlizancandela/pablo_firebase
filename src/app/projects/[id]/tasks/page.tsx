@@ -51,7 +51,11 @@ const taskSchema = z.object({
 
 type TaskFormData = z.infer<typeof taskSchema>;
 
-
+/**
+ * Página para mostrar y gestionar las tareas de un proyecto.
+ * Permite crear nuevas tareas y marcar las existentes como completadas.
+ * @returns {JSX.Element} El componente de la página de tareas.
+ */
 export default function ProjectTasksPage() {
   const project = useProject();
   const { firestore, user } = useFirebase();
@@ -73,6 +77,11 @@ export default function ProjectTasksPage() {
 
   const projectRef = doc(firestore, 'users', user!.uid, 'projects', project.id);
 
+  /**
+   * Maneja el cambio de estado de completado de una tarea.
+   * @param {string} taskId - El ID de la tarea a actualizar.
+   * @param {boolean} checked - El nuevo estado de completado.
+   */
   const handleTaskCheck = async (taskId: string, checked: boolean) => {
     const updatedTasks = project.tasks.map(task =>
       task.id === taskId ? { ...task, completed: checked } : task
@@ -84,6 +93,10 @@ export default function ProjectTasksPage() {
     }
   };
   
+  /**
+   * Maneja el envío del formulario para crear una nueva tarea.
+   * @param {TaskFormData} data - Los datos del formulario de la nueva tarea.
+   */
   const onSubmit = async (data: TaskFormData) => {
     const initials = data.assigneeName
       .split(' ')
@@ -93,7 +106,7 @@ export default function ProjectTasksPage() {
       .toUpperCase();
       
     const newTask: Task = {
-      id: `task_${Date.now()}`, // Simple unique ID
+      id: `task_${Date.now()}`, // ID único simple
       description: data.description,
       assignee: { name: data.assigneeName, initials: initials },
       priority: data.priority,
@@ -111,6 +124,11 @@ export default function ProjectTasksPage() {
     }
   };
 
+  /**
+   * Determina la variante de estilo para el badge de prioridad.
+   * @param {'Alta' | 'Media' | 'Baja'} priority - La prioridad de la tarea.
+   * @returns {'destructive' | 'secondary' | 'outline'} La variante del badge.
+   */
   const priorityBadgeVariant = (priority: 'Alta' | 'Media' | 'Baja'): 'destructive' | 'secondary' | 'outline' => {
     if (priority === 'Alta') return 'destructive';
     if (priority === 'Media') return 'secondary';
@@ -246,5 +264,3 @@ export default function ProjectTasksPage() {
     </Card>
   );
 }
-
-    

@@ -7,6 +7,11 @@ import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Camera, PlusCircle, Trash2 } from "lucide-react";
 
+/**
+ * Página que muestra la galería de fotos de un proyecto.
+ * Permite añadir nuevas fotos (funcionalidad futura) y ver las existentes.
+ * @returns {JSX.Element} El componente de la página de galería de fotos.
+ */
 export default function ProjectPhotosPage() {
   const project = useProject();
 
@@ -61,5 +66,3 @@ export default function ProjectPhotosPage() {
     </div>
   );
 }
-
-    

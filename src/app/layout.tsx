@@ -6,9 +6,17 @@ import { Toaster } from "@/components/ui/toaster";
 import { FirebaseClientProvider } from '@/firebase/client-provider';
 import { useAuth, useFirebase } from '@/firebase';
 import { initiateAnonymousSignIn } from '@/firebase/non-blocking-login';
-import { useEffect } from 'react';
+import { useEffect, type ReactNode } from 'react';
 
-function AuthWrapper({ children }: { children: React.ReactNode }) {
+/**
+ * Componente contenedor que gestiona la autenticación del usuario.
+ * Muestra un estado de carga mientras verifica al usuario y, si no hay ninguno,
+ * inicia un inicio de sesión anónimo.
+ * @param {object} props - Propiedades del componente.
+ * @param {ReactNode} props.children - Componentes hijos que se renderizarán una vez que el usuario esté autenticado.
+ * @returns {JSX.Element} El contenido de la aplicación o una pantalla de carga.
+ */
+function AuthWrapper({ children }: { children: ReactNode }) {
   const { user, isUserLoading } = useFirebase();
   const auth = useAuth();
 
@@ -30,10 +38,18 @@ function AuthWrapper({ children }: { children: React.ReactNode }) {
 }
 
 
+/**
+ * Layout raíz de la aplicación.
+ * Configura la estructura HTML base, el proveedor de Firebase, el sistema de notificaciones
+ * y el contenedor de autenticación que envuelve a toda la aplicación.
+ * @param {object} props - Propiedades del layout.
+ * @param {ReactNode} props.children - El contenido de la página que se renderizará dentro del layout.
+ * @returns {JSX.Element} El layout principal de la aplicación.
+ */
 export default function RootLayout({
   children,
 }: Readonly<{
-  children: React.ReactNode;
+  children: ReactNode;
 }>) {
   return (
     <html lang="en">

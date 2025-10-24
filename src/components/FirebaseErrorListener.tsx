@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -5,35 +6,36 @@ import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
 
 /**
- * An invisible component that listens for globally emitted 'permission-error' events.
- * It throws any received error to be caught by Next.js's global-error.tsx.
+ * Componente invisible que escucha eventos 'permission-error' emitidos globalmente.
+ * Lanza cualquier error recibido para que sea capturado por el `global-error.tsx` de Next.js.
+ * @returns {null} Este componente no renderiza nada.
  */
 export function FirebaseErrorListener() {
-  // Use the specific error type for the state for type safety.
+  // Usar el tipo de error específico para el estado para mayor seguridad de tipos.
   const [error, setError] = useState<FirestorePermissionError | null>(null);
 
   useEffect(() => {
-    // The callback now expects a strongly-typed error, matching the event payload.
+    // El callback ahora espera un error fuertemente tipado, que coincide con el payload del evento.
     const handleError = (error: FirestorePermissionError) => {
-      // Set error in state to trigger a re-render.
+      // Establecer el error en el estado para activar una nueva renderización.
       setError(error);
     };
 
-    // The typed emitter will enforce that the callback for 'permission-error'
-    // matches the expected payload type (FirestorePermissionError).
+    // El emisor tipado forzará que el callback para 'permission-error'
+    // coincida con el tipo de payload esperado (FirestorePermissionError).
     errorEmitter.on('permission-error', handleError);
 
-    // Unsubscribe on unmount to prevent memory leaks.
+    // Desuscribirse al desmontar para evitar fugas de memoria.
     return () => {
       errorEmitter.off('permission-error', handleError);
     };
   }, []);
 
-  // On re-render, if an error exists in state, throw it.
+  // En una nueva renderización, si existe un error en el estado, lo lanza.
   if (error) {
     throw error;
   }
 
-  // This component renders nothing.
+  // Este componente no renderiza nada.
   return null;
 }

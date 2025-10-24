@@ -6,9 +6,18 @@ import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 
 interface ProjectNavProps {
+  /**
+   * El ID del proyecto actual, usado para construir las URLs de navegación.
+   */
   projectId: string;
 }
 
+/**
+ * Componente de navegación para las diferentes secciones de un proyecto.
+ * Destaca el enlace de la sección activa.
+ * @param {ProjectNavProps} props - Las propiedades del componente.
+ * @returns {JSX.Element} La barra de navegación del proyecto.
+ */
 export default function ProjectNav({ projectId }: ProjectNavProps) {
   const pathname = usePathname();
 

@@ -15,7 +15,12 @@ import {
 } from "./ui/dropdown-menu";
 import { useEffect, useState } from "react";
 
-// Definimos la interfaz para el evento, ya que no es estándar en todos los navegadores
+/**
+ * Interfaz para el evento `beforeinstallprompt`.
+ * Este evento no es estándar en todos los navegadores.
+ * @interface BeforeInstallPromptEvent
+ * @extends {Event}
+ */
 interface BeforeInstallPromptEvent extends Event {
   readonly platforms: Array<string>;
   readonly userChoice: Promise<{
@@ -25,13 +30,22 @@ interface BeforeInstallPromptEvent extends Event {
   prompt(): Promise<void>;
 }
 
-
+/**
+ * Cabecera principal de la aplicación.
+ * Muestra el logo, el nombre de la aplicación, acciones principales (como instalar PWA, sincronizar)
+ * y el menú de usuario.
+ * @returns {JSX.Element} El componente de la cabecera.
+ */
 export default function Header() {
   const [installPrompt, setInstallPrompt] = useState<BeforeInstallPromptEvent | null>(null);
 
   useEffect(() => {
+    /**
+     * Maneja el evento `beforeinstallprompt` para controlar la instalación de la PWA.
+     * @param {Event} event - El evento `beforeinstallprompt`.
+     */
     const handleBeforeInstallPrompt = (event: Event) => {
-      // Previene que el mini-infobar aparezca en Chrome
+      // Previene que el mini-infobar aparezca en Chrome.
       event.preventDefault();
       // Guarda el evento para que pueda ser disparado más tarde.
       setInstallPrompt(event as BeforeInstallPromptEvent);
@@ -44,13 +58,17 @@ export default function Header() {
     };
   }, []);
 
+  /**
+   * Maneja el clic en el botón de instalación.
+   * Muestra el prompt de instalación al usuario.
+   */
   const handleInstallClick = () => {
     if (!installPrompt) {
       return;
     }
-    // Muestra el prompt de instalación
+    // Muestra el prompt de instalación.
     installPrompt.prompt();
-    // Espera a que el usuario responda al prompt
+    // Espera a que el usuario responda al prompt.
     installPrompt.userChoice.then((choiceResult) => {
       if (choiceResult.outcome === 'accepted') {
         console.log('El usuario aceptó instalar la PWA');

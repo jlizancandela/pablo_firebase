@@ -10,10 +10,22 @@ import { doc } from "firebase/firestore";
 import { Project } from "@/lib/data";
 import { createContext, useContext, ReactNode } from "react";
 
-// 1. Create a context for the project data
+// 1. Crear un contexto para los datos del proyecto
+/**
+ * @typedef {import('@/lib/data').Project} Project
+ */
+
+/**
+ * Contexto de React para proporcionar los datos de un proyecto a sus componentes hijos.
+ * @type {React.Context<Project | null>}
+ */
 const ProjectContext = createContext<Project | null>(null);
 
-// Custom hook to use the project context
+/**
+ * Hook personalizado para acceder a los datos del proyecto desde el contexto.
+ * Lanza un error si se utiliza fuera de un `ProjectProvider`.
+ * @returns {Project} Los datos del proyecto actual.
+ */
 export const useProject = () => {
   const project = useContext(ProjectContext);
   if (!project) {
@@ -22,22 +34,29 @@ export const useProject = () => {
   return project;
 };
 
-// 2. Create a provider component
+// 2. Crear un componente proveedor
+/**
+ * Proveedor que obtiene los datos de un proyecto desde Firestore y los
+ * pone a disposición de sus componentes hijos a través del `ProjectContext`.
+ * @param {object} props - Propiedades del componente.
+ * @param {ReactNode} props.children - Componentes hijos que tendrán acceso al contexto del proyecto.
+ * @returns {JSX.Element} El proveedor de contexto con los hijos, o un estado de carga/no encontrado.
+ */
 function ProjectProvider({ children }: { children: ReactNode }) {
   const params = useParams();
   const id = params.id as string;
   const { firestore, user, isUserLoading } = useFirebase();
 
   const projectRef = useMemoFirebase(() => {
-    // Only construct the reference if BOTH user and id are available.
+    // Solo construir la referencia si tanto el usuario como el ID están disponibles.
     if (!user || !id) return null;
     return doc(firestore, 'users', user.uid, 'projects', id);
   }, [firestore, user, id]);
 
   const { data: project, isLoading: isProjectLoading } = useDoc<Project>(projectRef);
 
-  // CRITICAL FIX: We must check for both user loading and project loading.
-  // If either is loading, we show the loading indicator.
+  // CORRECCIÓN CRÍTICA: Debemos verificar tanto la carga del usuario como la del proyecto.
+  // Si alguno está cargando, mostramos el indicador de carga.
   if (isUserLoading || isProjectLoading) {
     return (
       <div className="flex items-center justify-center h-screen">
@@ -46,7 +65,7 @@ function ProjectProvider({ children }: { children: ReactNode }) {
     );
   }
 
-  // Only after all loading is complete, if there's no project, then it's a 404.
+  // Solo después de que toda la carga esté completa, si no hay proyecto, entonces es un 404.
   if (!project) {
     return notFound();
   }
@@ -58,11 +77,18 @@ function ProjectProvider({ children }: { children: ReactNode }) {
   );
 }
 
-
+/**
+ * Layout principal para la página de un proyecto específico.
+ * Envuelve el contenido de la página del proyecto con el `ProjectProvider`,
+ * la cabecera y la navegación específica del proyecto.
+ * @param {object} props - Propiedades del layout.
+ * @param {ReactNode} props.children - El contenido de la página específica del proyecto (ej. Resumen, Tareas).
+ * @returns {JSX.Element} El layout de la página del proyecto.
+ */
 export default function ProjectLayout({
   children,
 }: {
-  children: React.ReactNode;
+  children: ReactNode;
 }) {
   const params = useParams();
   const id = params.id as string;
@@ -83,7 +109,11 @@ export default function ProjectLayout({
   );
 }
 
-// Wrapper component to use the context
+/**
+ * Componente contenedor que utiliza el contexto para pasar los datos del proyecto
+ * al componente `ProjectHeader`.
+ * @returns {JSX.Element} El componente de cabecera del proyecto con los datos inyectados.
+ */
 function ProjectHeaderWrapper() {
   const project = useProject();
   return <ProjectHeader project={project} />;
