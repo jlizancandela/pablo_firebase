@@ -77,7 +77,6 @@ export interface Project {
   photos: Photo[];
   visits: Visit[];
   phases: Phase[];
-  files: FileAttachment[];
 }
 
 // Helper function to generate unique IDs for fields

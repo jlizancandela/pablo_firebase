@@ -1,6 +1,6 @@
 
 import Dexie, { Table } from 'dexie';
-import type { Project, Task, Photo, Visit, FileAttachment } from './data';
+import type { Project, Task, Photo, Visit } from './data';
 import { getInitialPhases } from './data';
 import { v4 as uuidv4 } from 'uuid';
 import { PlaceHolderImages } from './placeholder-images';
@@ -21,7 +21,7 @@ export class ConstructWiseDexie extends Dexie {
     }
 
     // Method to add a new project
-    async addProject(projectData: Omit<Project, 'id' | 'startDate' | 'coverPhotoUrl' | 'coverPhotoHint' | 'tasks' | 'photos' | 'visits' | 'files' | 'phases'>) {
+    async addProject(projectData: Omit<Project, 'id' | 'startDate' | 'coverPhotoUrl' | 'coverPhotoHint' | 'tasks' | 'photos' | 'visits' | 'phases'>) {
         const randomImageIndex = Math.floor(Math.random() * 4);
         const newProject: ProjectWithId = {
             ...projectData,
@@ -32,7 +32,6 @@ export class ConstructWiseDexie extends Dexie {
             tasks: [],
             photos: [],
             visits: [],
-            files: [],
             phases: getInitialPhases(),
         };
         return await this.projects.add(newProject);
