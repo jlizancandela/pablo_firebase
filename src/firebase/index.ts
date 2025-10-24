@@ -16,14 +16,11 @@ export function initializeFirebase() {
   let app: FirebaseApp;
 
   if (!getApps().length) {
-    // Si no hay apps inicializadas, crea una nueva con la configuración importada.
     app = initializeApp(firebaseConfig);
   } else {
-    // Si ya está inicializada, simplemente obtiene la instancia existente.
     app = getApp();
   }
-
-  // Obtiene los servicios asociados a la app.
+  
   const auth = getAuth(app);
   const firestore = getFirestore(app);
   const storage = getStorage(app);

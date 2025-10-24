@@ -1,8 +1,10 @@
 
 import type {NextConfig} from 'next';
 
+// Carga las variables de entorno desde .env al inicio
+require('dotenv').config();
+
 const nextConfig: NextConfig = {
-  /* config options here */
   output: 'standalone',
   typescript: {
     ignoreBuildErrors: true,
