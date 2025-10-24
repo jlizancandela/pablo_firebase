@@ -32,6 +32,7 @@ const parseForm = (req: NextRequest): Promise<{ fields: formidable.Fields; files
 export async function POST(req: NextRequest) {
   try {
     // 1. Asegurar la inicialización de Firebase Admin en cada llamada.
+    // Esto es idempotente, por lo que es seguro llamarlo siempre.
     initializeAdminApp();
 
     // 2. Obtener la instancia del bucket de almacenamiento.

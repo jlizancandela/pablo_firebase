@@ -1,29 +1,34 @@
 
+import { getApps, initializeApp, getApp, type App } from 'firebase-admin/app';
+import { getStorage } from 'firebase-admin/storage';
 import * as admin from 'firebase-admin';
 
 /**
  * Inicializa la aplicación de Firebase Admin de forma idempotente.
  * Comprueba si la aplicación ya está inicializada antes de intentar crear una nueva.
- * Esto es crucial en entornos sin servidor y de recarga en caliente para evitar errores.
+ * Utiliza importaciones modulares para ser compatible con bundlers modernos como Turbopack.
+ * @returns {App} La instancia de la aplicación de Firebase Admin.
  */
-export const initializeAdminApp = () => {
-  // Si ya hay una aplicación inicializada, la usamos y evitamos errores.
-  if (admin.apps.length > 0) {
-    return admin.app();
+export const initializeAdminApp = (): App => {
+  // Si ya hay una aplicación inicializada con el nombre por defecto, la devolvemos.
+  if (getApps().length > 0) {
+    return getApp();
   }
 
-  // Si no hay ninguna, la inicializamos con las credenciales de la aplicación por defecto
-  // y la configuración del bucket de almacenamiento desde las variables de entorno.
+  // Si no, la inicializamos.
   try {
-    const app = admin.initializeApp({
+    const app = initializeApp({
+      // Las credenciales de `applicationDefault` son detectadas automáticamente
+      // por el entorno de Google Cloud.
       credential: admin.credential.applicationDefault(),
+      // Leemos el bucket de almacenamiento desde las variables de entorno.
       storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
     });
     console.log('Firebase Admin SDK initialized successfully.');
     return app;
   } catch (error: any) {
-    console.error('Firebase Admin SDK initialization error:', error.message);
-    // Lanzamos el error para que la función que llama sepa que algo ha ido mal.
+    console.error('Firebase Admin SDK initialization error:', error);
+    // Relanzamos un error más claro para facilitar la depuración.
     throw new Error(`Firebase Admin SDK initialization failed: ${error.message}`);
   }
 };
