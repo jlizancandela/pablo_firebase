@@ -9,7 +9,6 @@ import { Camera, PlusCircle, Trash2, Save, Upload, Share2, ImageIcon } from "luc
 import { useRef, useState, useEffect } from "react";
 import type { Photo } from "@/lib/data";
 import { Textarea } from "@/components/ui/textarea";
-import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
 import {
   AlertDialog,
@@ -173,7 +172,7 @@ export default function ProjectPhotosPage() {
   const handleShare = async (photo: Photo) => {
     try {
         const file = await dataUrlToFile(photo.url, `foto-proyecto-${photo.id}.png`);
-        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        if (navigator.canShare({ files: [file] })) {
             await navigator.share({
                 files: [file],
                 title: `Foto del proyecto: ${project.name}`,

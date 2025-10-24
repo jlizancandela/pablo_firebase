@@ -5,7 +5,6 @@ import { notFound, useParams } from "next/navigation";
 import Header from "@/components/header";
 import ProjectHeader from "@/components/project-header";
 import ProjectNav from "@/components/project-nav";
-import { Project } from "@/lib/data";
 import { createContext, useContext, ReactNode } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
 import { db, ProjectWithId } from "@/lib/db";
@@ -16,9 +15,9 @@ const ProjectContext = createContext<ProjectWithId | null>(null);
 /**
  * Hook personalizado para acceder a los datos del proyecto desde el contexto.
  * Lanza un error si se utiliza fuera de un `ProjectProvider`.
- * @returns {Project} Los datos del proyecto actual.
+ * @returns {ProjectWithId} Los datos del proyecto actual.
  */
-export const useProject = () => {
+export const useProject = (): ProjectWithId => {
   const project = useContext(ProjectContext);
   if (!project) {
     throw new Error("useProject must be used within a ProjectProvider");

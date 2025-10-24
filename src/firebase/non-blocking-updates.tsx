@@ -22,7 +22,7 @@ import { Photo } from '@/lib/data';
  * Does NOT await the write operation internally.
  */
 export function setDocumentNonBlocking(docRef: DocumentReference, data: any, options: SetOptions) {
-  setDoc(docRef, data, options).catch(error => {
+  setDoc(docRef, data, options).catch((error: any) => {
     errorEmitter.emit(
       'permission-error',
       new FirestorePermissionError({
@@ -43,7 +43,7 @@ export function setDocumentNonBlocking(docRef: DocumentReference, data: any, opt
  */
 export function addDocumentNonBlocking(colRef: CollectionReference, data: any) {
   const promise = addDoc(colRef, data)
-    .catch(error => {
+    .catch((error: any) => {
       errorEmitter.emit(
         'permission-error',
         new FirestorePermissionError({
@@ -63,7 +63,7 @@ export function addDocumentNonBlocking(colRef: CollectionReference, data: any) {
  */
 export function updateDocumentNonBlocking(docRef: DocumentReference, data: WithFieldValue<DocumentData>) {
   updateDoc(docRef, data)
-    .catch(error => {
+    .catch((error: any) => {
       errorEmitter.emit(
         'permission-error',
         new FirestorePermissionError({
@@ -84,7 +84,7 @@ export function updateDocumentNonBlocking(docRef: DocumentReference, data: WithF
 export function addPhotoToProjectNonBlocking(projectRef: DocumentReference, newPhoto: Photo) {
   updateDoc(projectRef, {
     photos: arrayUnion(newPhoto)
-  }).catch(error => {
+  }).catch((error: any) => {
     errorEmitter.emit(
       'permission-error',
       new FirestorePermissionError({
@@ -105,7 +105,7 @@ export function deleteDocumentNonBlocking(docRef: DocumentReference, data?: With
   // If data is provided, it's an update to remove an element, otherwise it's a full document delete.
   if (data) {
      updateDoc(docRef, data)
-    .catch(error => {
+    .catch((error: any) => {
       errorEmitter.emit(
         'permission-error',
         new FirestorePermissionError({
@@ -116,7 +116,7 @@ export function deleteDocumentNonBlocking(docRef: DocumentReference, data?: With
     });
   } else {
     deleteDoc(docRef)
-      .catch(error => {
+      .catch((error: any) => {
         errorEmitter.emit(
           'permission-error',
           new FirestorePermissionError({

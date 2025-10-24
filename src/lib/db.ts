@@ -44,8 +44,8 @@ export class ConstructPabloDexie extends Dexie {
     }
     
     async addPhotoToProject(projectId: string, photo: Photo): Promise<void> {
-        await this.projects.update(projectId, {
-            photos: Dexie.currentChallenge.value.photos.concat(photo)
+        await this.projects.where('id').equals(projectId).modify(p => {
+            p.photos.push(photo);
         });
     }
 }

@@ -58,7 +58,7 @@ export async function POST(req: NextRequest) {
     // 4. Guardar el archivo en el bucket.
     await fileUpload.save(fileContent, {
       metadata: {
-        contentType: file.mimetype,
+        contentType: file.mimetype ?? 'application/octet-stream',
       },
     });
 

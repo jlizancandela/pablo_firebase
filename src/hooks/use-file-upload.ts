@@ -1,9 +1,10 @@
+
 'use client';
 
 import { useState } from 'react';
 import { useToast } from './use-toast';
 import { useStorage } from '@/firebase';
-import { ref, uploadBytesResumable, getDownloadURL, UploadTask } from 'firebase/storage';
+import { ref, uploadBytesResumable, getDownloadURL, UploadTask, UploadTaskSnapshot } from 'firebase/storage';
 
 /**
  * Hook para gestionar la subida de archivos directamente a Firebase Storage.
@@ -44,12 +45,12 @@ export const useFileUpload = () => {
 
       // Escucha los eventos de estado de la subida.
       uploadTask.on('state_changed',
-        (snapshot) => {
+        (snapshot: UploadTaskSnapshot) => {
           // Actualiza el progreso de la subida.
           const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
           setUploadProgress(progress);
         },
-        (error) => {
+        (error: any) => {
           // Maneja los errores de subida.
           console.error("Error en la subida:", error);
           toast({
@@ -65,9 +66,9 @@ export const useFileUpload = () => {
           // Maneja el éxito de la subida.
           setUploadProgress(100);
           // Una vez completada, obtiene la URL de descarga.
-          getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => {
+          getDownloadURL(uploadTask.snapshot.ref).then((downloadURL: string) => {
             resolve(downloadURL);
-          }).catch((error) => {
+          }).catch((error: any) => {
             console.error("Error obteniendo la URL de descarga:", error);
             toast({
               variant: "destructive",
