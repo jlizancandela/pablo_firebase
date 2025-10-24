@@ -22,6 +22,7 @@ export const initializeAdminApp = (): App => {
       // por el entorno de Google Cloud.
       credential: admin.credential.applicationDefault(),
       // Leemos el bucket de almacenamiento desde las variables de entorno.
+      // ESTA LÍNEA ES CRUCIAL para que el SDK de Admin sepa a qué bucket conectarse.
       storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
     });
     console.log('Firebase Admin SDK initialized successfully.');
