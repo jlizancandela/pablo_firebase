@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useProject } from "./layout";
+import { useProject } from "./project-context";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";

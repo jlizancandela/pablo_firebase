@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useProject } from "../layout";
+import { useProject } from "../project-context";
 import { Card, CardContent } from "@/components/ui/card";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Badge } from "@/components/ui/badge";

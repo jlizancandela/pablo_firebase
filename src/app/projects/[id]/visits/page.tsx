@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useProject } from "../layout";
+import { useProject } from "../project-context";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { PlusCircle, CalendarDays, Users, ClipboardList, Edit, Calendar as CalendarIcon } from "lucide-react";

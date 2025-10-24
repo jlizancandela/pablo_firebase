@@ -2,7 +2,7 @@
 'use client';
 
 import Image from "next/image";
-import { useProject } from "../layout";
+import { useProject } from "../project-context";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Camera, PlusCircle, Trash2, Save, Upload, Share2, ImageIcon } from "lucide-react";
