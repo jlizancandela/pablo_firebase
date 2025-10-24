@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Camera, PlusCircle, Trash2, Upload, Save } from "lucide-react";
 import { useFileUpload } from "@/hooks/use-file-upload";
 import { useRef, useState } from "react";
-import { useFirebase } from "@/firebase";
+import { useFirebase, updateDocumentNonBlocking } from "@/firebase";
 import { doc, updateDoc, Timestamp } from "firebase/firestore";
 import type { Photo } from "@/lib/data";
 import { Textarea } from "@/components/ui/textarea";
@@ -37,40 +37,40 @@ export default function ProjectPhotosPage() {
    * Maneja la selección de un archivo para subirlo.
    * @param {React.ChangeEvent<HTMLInputElement>} event - El evento de cambio del input de archivo.
    */
-  const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
-    try {
-      const { downloadURL } = await uploadFile(file, `projects/${project.id}/photos`);
-      const randomGalleryImage = PlaceHolderImages.find(p => p.id.startsWith('project-gallery')) || PlaceHolderImages[4];
-      
-      const newPhoto: Photo = {
-        id: `photo_${Date.now()}`,
-        url: downloadURL,
-        hint: randomGalleryImage.imageHint,
-        comment: '',
-        capturedAt: Timestamp.now(),
-      };
+    uploadFile(file, `projects/${project.id}/photos`)
+      .then(({ downloadURL }) => {
+        const randomGalleryImage = PlaceHolderImages.find(p => p.id.startsWith('project-gallery')) || PlaceHolderImages[4];
+        
+        const newPhoto: Photo = {
+          id: `photo_${Date.now()}`,
+          url: downloadURL,
+          hint: randomGalleryImage.imageHint,
+          comment: '',
+          capturedAt: Timestamp.now(),
+        };
 
-      // Actualiza Firestore con la nueva foto
-      await updateDoc(projectRef, {
-        photos: [...project.photos, newPhoto]
-      });
+        // Usa la actualización no bloqueante para una experiencia offline-first
+        updateDocumentNonBlocking(projectRef, {
+          photos: [...project.photos, newPhoto]
+        });
 
-      toast({
-        title: 'Foto añadida',
-        description: 'La foto se ha subido y añadido a tu proyecto.',
+        toast({
+          title: 'Foto en proceso',
+          description: 'La foto se está subiendo y aparecerá en breve.',
+        });
+      })
+      .catch((error) => {
+        console.error("Error subiendo la foto: ", error);
+        toast({
+          variant: "destructive",
+          title: 'Error de subida',
+          description: error instanceof Error ? error.message : 'No se pudo subir la foto.',
+        });
       });
-
-    } catch (error) {
-      console.error("Error subiendo la foto: ", error);
-      toast({
-        variant: "destructive",
-        title: 'Error de subida',
-        description: error instanceof Error ? error.message : 'No se pudo subir la foto.',
-      });
-    }
   };
   
   /**
