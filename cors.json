@@ -3,7 +3,7 @@
   {
     "origin": ["*"],
     "method": ["GET", "HEAD", "POST", "PUT"],
-    "responseHeader": ["Content-Type"],
+    "responseHeader": ["*"],
     "maxAgeSeconds": 3600
   }
 ]
