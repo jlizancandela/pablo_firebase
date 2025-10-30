@@ -7,7 +7,7 @@ import { Task } from "@/lib/data";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { PlusCircle } from "lucide-react";
+import { PlusCircle, Trash2 } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -28,6 +28,17 @@ import {
   DialogFooter,
   DialogClose,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -81,6 +92,8 @@ export default function ProjectTasksPage() {
    * @param {string} taskId - El ID de la tarea a actualizar.
    * @param {boolean} checked - El nuevo estado de completado.
    */
+  const [taskToDelete, setTaskToDelete] = useState<string | null>(null);
+
   const handleTaskCheck = async (taskId: string, checked: boolean) => {
     const updatedTasks = project.tasks.map(task =>
       task.id === taskId ? { ...task, completed: checked } : task
@@ -91,6 +104,18 @@ export default function ProjectTasksPage() {
       console.error("Error updating task: ", error);
       toast({ variant: "destructive", title: "Error", description: "No se pudo actualizar la tarea."});
     }
+  };
+
+  const handleTaskDelete = async (taskId: string) => {
+    const updatedTasks = project.tasks.filter(task => task.id !== taskId);
+    try {
+      await db.projects.update(project.id, { tasks: updatedTasks });
+      toast({ title: "Tarea eliminada", description: "La tarea ha sido eliminada del proyecto."});
+    } catch (error) {
+      console.error("Error deleting task: ", error);
+      toast({ variant: "destructive", title: "Error", description: "No se pudo eliminar la tarea."});
+    }
+    setTaskToDelete(null);
   };
   
   /**
@@ -223,6 +248,7 @@ export default function ProjectTasksPage() {
                 <TableHead>Descripción</TableHead>
                 <TableHead>Asignado a</TableHead>
                 <TableHead className="text-center">Prioridad</TableHead>
+                <TableHead className="w-[50px]"></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -252,6 +278,27 @@ export default function ProjectTasksPage() {
                      <Badge variant={priorityBadgeVariant(task.priority)} className="capitalize w-20 justify-center">
                         {task.priority}
                      </Badge>
+                  </TableCell>
+                  <TableCell>
+                    <AlertDialog open={taskToDelete === task.id} onOpenChange={() => setTaskToDelete(null)}>
+                      <AlertDialogTrigger asChild>
+                        <Button variant="ghost" size="icon" onClick={() => setTaskToDelete(task.id)}>
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            Esta acción no se puede deshacer. Esto eliminará permanentemente la tarea de tu proyecto.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                          <AlertDialogAction onClick={() => handleTaskDelete(task.id)}>Eliminar</AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
                   </TableCell>
                 </TableRow>
               ))}
