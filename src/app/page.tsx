@@ -152,26 +152,26 @@ export default function Home() {
         </DialogHeader>
         <form onSubmit={handleSubmit(onSubmit)}>
           <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="name" className="text-right">Nombre</Label>
-              <Controller name="name" control={control} render={({ field }) => <Input id="name" {...field} className="col-span-3" />} />
-              {errors.name && <p className="col-span-4 text-red-500 text-xs text-right">{errors.name.message}</p>}
+            <div className="grid grid-cols-1 sm:grid-cols-4 items-center gap-x-4 gap-y-2">
+              <Label htmlFor="name" className="text-left sm:text-right">Nombre</Label>
+              <Controller name="name" control={control} render={({ field }) => <Input id="name" {...field} className="col-span-full sm:col-span-3" />} />
+              {errors.name && <p className="col-span-full sm:col-span-4 text-red-500 text-xs sm:text-right">{errors.name.message}</p>}
             </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="address" className="text-right">Dirección</Label>
-              <Controller name="address" control={control} render={({ field }) => <Input id="address" {...field} className="col-span-3" />} />
-              {errors.address && <p className="col-span-4 text-red-500 text-xs text-right">{errors.address.message}</p>}
+            <div className="grid grid-cols-1 sm:grid-cols-4 items-center gap-x-4 gap-y-2">
+              <Label htmlFor="address" className="text-left sm:text-right">Dirección</Label>
+              <Controller name="address" control={control} render={({ field }) => <Input id="address" {...field} className="col-span-full sm:col-span-3" />} />
+              {errors.address && <p className="col-span-full sm:col-span-4 text-red-500 text-xs sm:text-right">{errors.address.message}</p>}
             </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="client" className="text-right">Cliente</Label>
-              <Controller name="client" control={control} render={({ field }) => <Input id="client" {...field} className="col-span-3" />} />
-              {errors.client && <p className="col-span-4 text-red-500 text-xs text-right">{errors.client.message}</p>}
+            <div className="grid grid-cols-1 sm:grid-cols-4 items-center gap-x-4 gap-y-2">
+              <Label htmlFor="client" className="text-left sm:text-right">Cliente</Label>
+              <Controller name="client" control={control} render={({ field }) => <Input id="client" {...field} className="col-span-full sm:col-span-3" />} />
+              {errors.client && <p className="col-span-full sm:col-span-4 text-red-500 text-xs sm:text-right">{errors.client.message}</p>}
             </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="projectType" className="text-right">Tipo</Label>
+            <div className="grid grid-cols-1 sm:grid-cols-4 items-center gap-x-4 gap-y-2">
+              <Label htmlFor="projectType" className="text-left sm:text-right">Tipo</Label>
               <Controller name="projectType" control={control} render={({ field }) => (
                 <Select onValueChange={field.onChange} defaultValue={field.value}>
-                  <SelectTrigger className="col-span-3">
+                  <SelectTrigger className="col-span-full sm:col-span-3">
                     <SelectValue placeholder="Seleccionar tipo" />
                   </SelectTrigger>
                   <SelectContent>
