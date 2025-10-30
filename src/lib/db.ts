@@ -16,8 +16,8 @@ export class ConstructPabloDexie extends Dexie {
 
     constructor() {
         super('ConstructPabloDB');
-        this.version(2).stores({
-            projects: '++id, name, client',
+        this.version(3).stores({
+            projects: 'id, name, client',
             workLogs: '++id, projectId, date',
         });
         // The upgrade function for version 1 is now implicitly handled by Dexie.

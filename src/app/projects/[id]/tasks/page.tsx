@@ -28,17 +28,6 @@ import {
   DialogFooter,
   DialogClose,
 } from "@/components/ui/dialog";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog"
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -92,8 +81,6 @@ export default function ProjectTasksPage() {
    * @param {string} taskId - El ID de la tarea a actualizar.
    * @param {boolean} checked - El nuevo estado de completado.
    */
-  const [taskToDelete, setTaskToDelete] = useState<string | null>(null);
-
   const handleTaskCheck = async (taskId: string, checked: boolean) => {
     const updatedTasks = project.tasks.map(task =>
       task.id === taskId ? { ...task, completed: checked } : task
@@ -107,15 +94,16 @@ export default function ProjectTasksPage() {
   };
 
   const handleTaskDelete = async (taskId: string) => {
-    const updatedTasks = project.tasks.filter(task => task.id !== taskId);
-    try {
-      await db.projects.update(project.id, { tasks: updatedTasks });
-      toast({ title: "Tarea eliminada", description: "La tarea ha sido eliminada del proyecto."});
-    } catch (error) {
-      console.error("Error deleting task: ", error);
-      toast({ variant: "destructive", title: "Error", description: "No se pudo eliminar la tarea."});
+    if (window.confirm("¿Estás seguro de que quieres eliminar esta tarea?")) {
+      const updatedTasks = project.tasks.filter(task => task.id !== taskId);
+      try {
+        await db.projects.update(project.id, { tasks: updatedTasks });
+        toast({ title: "Tarea eliminada", description: "La tarea ha sido eliminada del proyecto."});
+      } catch (error) {
+        console.error("Error deleting task: ", error);
+        toast({ variant: "destructive", title: "Error", description: "No se pudo eliminar la tarea."});
+      }
     }
-    setTaskToDelete(null);
   };
   
   /**
@@ -280,25 +268,9 @@ export default function ProjectTasksPage() {
                      </Badge>
                   </TableCell>
                   <TableCell>
-                    <AlertDialog open={taskToDelete === task.id} onOpenChange={() => setTaskToDelete(null)}>
-                      <AlertDialogTrigger asChild>
-                        <Button variant="ghost" size="icon" onClick={() => setTaskToDelete(task.id)}>
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
-                          <AlertDialogDescription>
-                            Esta acción no se puede deshacer. Esto eliminará permanentemente la tarea de tu proyecto.
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                          <AlertDialogAction onClick={() => handleTaskDelete(task.id)}>Eliminar</AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
+                    <Button variant="ghost" size="icon" onClick={() => handleTaskDelete(task.id)} className="delete-task-button">
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
                   </TableCell>
                 </TableRow>
               ))}
