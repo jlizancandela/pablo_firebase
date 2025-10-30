@@ -7,6 +7,13 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { Badge } from "@/components/ui/badge";
 import { CheckCircle2, Circle, Radio, Save } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Phase, PhaseStatus, CheckpointStatus, Checkpoint } from "@/lib/data";
 import { db } from "@/lib/db";
 import { useToast } from "@/hooks/use-toast";
@@ -139,7 +146,7 @@ export default function ProjectPhasesPage() {
    * @param {string} phaseId - El ID de la fase a la que pertenece el checkpoint.
    * @param {string} checkpointId - El ID del checkpoint que se está actualizando.
    */
-  const handleCheckpointClick = async (phaseId: string, checkpointId: string) => {
+  const handleCheckpointStatusChange = async (phaseId: string, checkpointId: string, newStatus: CheckpointStatus) => {
     const newPhases: Phase[] = JSON.parse(JSON.stringify(project.phases));
     const phaseIndex = newPhases.findIndex(p => p.id === phaseId);
     if (phaseIndex === -1) return;
@@ -147,18 +154,7 @@ export default function ProjectPhasesPage() {
     const checkpointIndex = newPhases[phaseIndex].checkpoints.findIndex(c => c.id === checkpointId);
     if (checkpointIndex === -1) return;
 
-    const currentStatus = newPhases[phaseIndex].checkpoints[checkpointIndex].status;
-    let nextStatus: CheckpointStatus;
-
-    if (currentStatus === 'No iniciado') {
-      nextStatus = 'En curso';
-    } else if (currentStatus === 'En curso') {
-      nextStatus = 'Completado';
-    } else { // 'Completado'
-      nextStatus = 'No iniciado';
-    }
-
-    newPhases[phaseIndex].checkpoints[checkpointIndex].status = nextStatus;
+    newPhases[phaseIndex].checkpoints[checkpointIndex].status = newStatus;
 
     // Recalcular el estado de la fase principal
     newPhases[phaseIndex].status = recalculatePhaseStatus(newPhases[phaseIndex]);
@@ -208,14 +204,24 @@ export default function ProjectPhasesPage() {
                     {phase.checkpoints.length > 0 ? (
                       phase.checkpoints.map(checkpoint => (
                         <Card key={checkpoint.id}>
-                           <div className="flex items-center justify-between p-4 cursor-pointer" onClick={() => handleCheckpointClick(phase.id, checkpoint.id)}>
+                           <div className="flex items-center justify-between p-4">
                             <div className="flex items-center gap-3">
                               {statusIcon(checkpoint.status)}
                               <h4 className="text-base font-medium">{checkpoint.title}</h4>
                             </div>
-                            <Badge variant={statusBadgeVariant(checkpoint.status)} className="text-xs">
-                             {checkpoint.status}
-                            </Badge>
+                            <Select
+                              value={checkpoint.status}
+                              onValueChange={(newStatus: CheckpointStatus) => handleCheckpointStatusChange(phase.id, checkpoint.id, newStatus)}
+                            >
+                              <SelectTrigger className="w-[140px] text-xs">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="No iniciado">No iniciado</SelectItem>
+                                <SelectItem value="En curso">En curso</SelectItem>
+                                <SelectItem value="Completado">Completado</SelectItem>
+                              </SelectContent>
+                            </Select>
                           </div>
                           <CardContent className="space-y-3 pt-0">
                             {checkpoint.fields.length > 0 && (
