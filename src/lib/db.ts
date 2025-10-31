@@ -1,6 +1,6 @@
 
 import Dexie, { Table } from 'dexie';
-import type { Project, Task, Photo, Visit, WorkLog } from './data';
+import type { Project, Task, Photo, Visit, WorkLog, ChangeLog } from './data';
 import { getInitialPhases } from './data';
 import { v4 as uuidv4 } from 'uuid';
 import { PlaceHolderImages } from './placeholder-images';
@@ -13,12 +13,14 @@ export interface ProjectWithId extends Project {
 export class ConstructPabloDexie extends Dexie {
     projects!: Table<ProjectWithId>;
     workLogs!: Table<WorkLog, string>;
+    changeLogs!: Table<ChangeLog, string>;
 
     constructor() {
         super('ConstructPabloDB');
-        this.version(3).stores({
+        this.version(4).stores({
             projects: 'id, name, client',
             workLogs: '++id, projectId, date',
+            changeLogs: '++id, projectId, date',
         });
         // The upgrade function for version 1 is now implicitly handled by Dexie.
         // When a user opens the app with an older DB, Dexie sees version 2 and the new 'workLogs' store,

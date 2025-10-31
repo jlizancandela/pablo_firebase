@@ -26,6 +26,8 @@ export default function ProjectNav({ projectId }: ProjectNavProps) {
     { name: "Tareas", href: `/projects/${projectId}/tasks` },
     { name: "Fotos", href: `/projects/${projectId}/photos` },
     { name: "Visitas", href: `/projects/${projectId}/visits` },
+    // 👇 Conflicto Resuelto: Ambos elementos de navegación incluidos 👇
+    { name: "Registro de Cambios", href: `/projects/${projectId}/change-log` },
     { name: "Subcontratas", href: `/projects/${projectId}/subcontractors` },
   ];
 
