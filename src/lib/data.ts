@@ -73,6 +73,15 @@ export interface WorkLog {
   description: string;
 }
 
+export interface ChangeLog {
+  id: string;
+  projectId: string;
+  date: Date;
+  change: string;
+  informed: string[];
+  observations: string;
+}
+
 export interface Project {
   id: string;
   name: string;
