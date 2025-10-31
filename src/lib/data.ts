@@ -64,6 +64,15 @@ export interface Visit {
   observations: string;
 }
 
+export interface Subcontractor {
+  id: string;
+  name: string;
+  company: string;
+  role: string;
+  email: string;
+  phone: string;
+}
+
 export interface WorkLog {
   id: string;
   projectId: string;
@@ -86,6 +95,7 @@ export interface Project {
   photos: Photo[];
   visits: Visit[];
   phases: Phase[];
+  subcontractors: Subcontractor[];
 }
 
 export interface ProjectWithId extends Project {
